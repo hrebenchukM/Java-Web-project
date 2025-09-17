@@ -1,5 +1,6 @@
 package learning.itstep.javaweb222.servlets;
  
+import com.google.inject.Singleton;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -7,7 +8,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
  
-@WebServlet("/user")
+//@WebServlet("/user")
+@Singleton
 public class UserServlet extends HttpServlet {
  
     @Override

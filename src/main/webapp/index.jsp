@@ -141,7 +141,7 @@
         <b>Нелегальний запит в обхід сервлету</b>
         
 <% } else { %>
-
+<%=fromServlet%>
         <h2>Java EE</h2>
         <p>
             Java Enterprise Edition - Java + додаткові модулі для роботи з мережею.

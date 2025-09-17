@@ -55,8 +55,8 @@
 
         <div class="footer-links">
             <strong style="color:white;">Quick Links</strong>
-            <a href="index.jsp">🏠 Home</a>
-            <a href="user">👤 User</a>
+            <a href="<%= request.getContextPath() %>/index.jsp">🏠 Home</a>
+            <a href="<%= request.getContextPath() %>/user">👤 User</a>
         </div>
 
     </div>

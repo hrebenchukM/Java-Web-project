@@ -9,22 +9,26 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import learning.itstep.javaweb222.services.kdf.KdfService;
+import learning.itstep.javaweb222.services.timestamp.UnixTimestampService;
 
 //@WebServlet("")   // сервлет для головної сторінки
 @Singleton
 public class HomeServlet extends HttpServlet {
 private final KdfService kdfService;
+private final UnixTimestampService unixTimestampService;
 @Inject
-public HomeServlet(KdfService kdfService)
+public HomeServlet(KdfService kdfService ,UnixTimestampService unixTimestampService)
 {
       this.kdfService=kdfService;
+      this.unixTimestampService=unixTimestampService;
 }
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         System.out.println("HomeServlet::doGet");  // вивід до out сервера (Apache)
         // атрибут, що буде у req протягом подальшої обробки (у т.ч. на JSP)
       req.setAttribute("HomeServlet", "Hello from HomeServlet " + kdfService.dk("123", ""));
-  
+      req.setAttribute("Timestamp", unixTimestampService.getTimestamp());
+
         // return View()
         req.getRequestDispatcher("index.jsp").forward(req, resp);
         

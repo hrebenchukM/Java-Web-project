@@ -204,6 +204,7 @@
         </jsp:include>
         <h3>Передача даних від сервлету (контролера)</h3>
       <h5>  <%= request.getAttribute("HomeServlet") %></h5>
+      <h5>UNIX Timestamp: <%= request.getAttribute("Timestamp") %></h5>
 <% } %>
 
 

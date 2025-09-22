@@ -9,6 +9,8 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -67,6 +69,24 @@ public class DateAccessor {
       {
        logger.log(Level.WARNING,
         "DateAccessor::getDbIdentity " + ex.getMessage() + " | " + sql);
+      }
+    return null;
+    }
+    
+    public LocalDateTime getDbTime() 
+    {
+      String sql = "SELECT NOW()";
+      try (Statement statement = this.getConnection().createStatement()) 
+      {
+        ResultSet rs = statement.executeQuery(sql);
+        rs.next();
+        Timestamp ts = rs.getTimestamp(1);
+        return ts.toLocalDateTime();
+      }
+      catch (SQLException ex) 
+      {
+        logger.log(Level.WARNING,
+            "DateAccessor::getDbTime " + ex.getMessage() + " | " + sql);
       }
     return null;
     }

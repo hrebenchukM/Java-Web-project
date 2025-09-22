@@ -2,6 +2,8 @@
 package learning.itstep.javaweb222.ioc;
 
 import com.google.inject.AbstractModule;
+import learning.itstep.javaweb222.services.config.ConfigService;
+import learning.itstep.javaweb222.services.config.JsonConfigService;
 import learning.itstep.javaweb222.services.hash.HashService;
 import learning.itstep.javaweb222.services.hash.Md5HashService;
 import learning.itstep.javaweb222.services.kdf.KdfService;
@@ -20,5 +22,7 @@ public class ServicesConfig extends AbstractModule {
        bind(KdfService.class).to(PbKdfService.class);
        bind(HashService.class).to(Md5HashService.class);
        bind(TimestampService.class).to(UnixTimestampService.class);
+       bind(ConfigService.class).to(JsonConfigService.class)
+               .asEagerSingleton();
     }
 }

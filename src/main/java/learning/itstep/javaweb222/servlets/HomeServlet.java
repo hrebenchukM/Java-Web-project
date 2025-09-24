@@ -38,6 +38,10 @@ public HomeServlet(KdfService kdfService ,UnixTimestampService unixTimestampServ
               + kdfService.dk("123", "") 
               +"<br/>UUID:"
               + dateAccessor.getDbIdentity()
+              +"<br/>"
+              + (dateAccessor.install()?"Install ok":"Install error")
+               +"<br/>"
+              + (dateAccessor.seed()?"Seed ok":"Seed error")
               +"<br/>DB Time: "
               + dateAccessor.getDbTime()
               

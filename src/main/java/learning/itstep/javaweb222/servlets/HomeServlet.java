@@ -9,7 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import learning.itstep.javaweb222.data.DateAccessor;
+import learning.itstep.javaweb222.data.DataAccessor;
 import learning.itstep.javaweb222.services.config.ConfigService;
 import learning.itstep.javaweb222.services.kdf.KdfService;
 import learning.itstep.javaweb222.services.timestamp.UnixTimestampService;
@@ -19,9 +19,9 @@ import learning.itstep.javaweb222.services.timestamp.UnixTimestampService;
 public class HomeServlet extends HttpServlet {
 private final KdfService kdfService;
 private final UnixTimestampService unixTimestampService;
-private final DateAccessor dateAccessor;
+private final DataAccessor dateAccessor;
 @Inject
-public HomeServlet(KdfService kdfService ,UnixTimestampService unixTimestampService,DateAccessor dateAccessor)
+public HomeServlet(KdfService kdfService ,UnixTimestampService unixTimestampService,DataAccessor dateAccessor)
 {
       this.kdfService=kdfService;
       this.unixTimestampService=unixTimestampService;

@@ -12,8 +12,10 @@ import java.io.IOException;
 import java.util.Base64;
 import java.util.UUID;
 import learning.itstep.javaweb222.data.DataAccessor;
+import learning.itstep.javaweb222.data.dto.AccessToken;
 import learning.itstep.javaweb222.data.dto.User;
 import learning.itstep.javaweb222.data.dto.UserAccess;
+import learning.itstep.javaweb222.data.jwt.JwtToken;
 
 
 
@@ -71,11 +73,20 @@ public class UserServlet extends HttpServlet {
         }
         
         UserAccess ua = dataAccessor.getUserAccessByCredentials(parts[0], parts[1]);
+        if(ua ==null)
+        {
+              resp.setStatus(401);
+            resp.getWriter().print(
+                gson.toJson("Credentials rejected. Access denied")
+            );
+            return;
+        }
+        AccessToken at = dataAccessor.getTokenByUserAccess(ua);
+        JwtToken jwt = JwtToken.fromAccessToken(at);
         
         resp.setHeader("Content-Type", "application/json");
-        resp.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");
         resp.getWriter().print(
-                gson.toJson(ua)
+                gson.toJson(jwt)
         );
         
 //     System.out.println("UserServlet::doGet");  // вивід до out сервера (Apache)
@@ -85,17 +96,10 @@ public class UserServlet extends HttpServlet {
 //        // return View()
 //        req.getRequestDispatcher("user.jsp").forward(req, resp);
     }
-     @Override
-    protected void doOptions(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        resp.setHeader("Access-Control-Allow-Origin", "http://localhost:5173"); 
-       resp.setHeader("Access-Control-Allow-Headers", req.getHeader("Access-Control-Request-Headers"));
-    resp.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
-    }
-
+   
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        resp.setHeader("Access-Control-Allow-Origin", "http://localhost:5173"); 
-   
+      
         resp.getWriter().print(
                 gson.toJson("POST works")
         );
@@ -103,8 +107,7 @@ public class UserServlet extends HttpServlet {
 
     @Override
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-          resp.setHeader("Access-Control-Allow-Origin", "http://localhost:5173"); 
-   
+  
         resp.getWriter().print(
                 gson.toJson("PUT works")
         );
@@ -112,16 +115,16 @@ public class UserServlet extends HttpServlet {
 
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        resp.setHeader("Access-Control-Allow-Origin", "http://localhost:5173"); 
-    resp.getWriter().print(
+    
+        resp.getWriter().print(
             gson.toJson("DELETE works")
     );
     }
 
     @Override
     protected void doPatch(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-   resp.setHeader("Access-Control-Allow-Origin", "http://localhost:5173"); 
-    resp.getWriter().print(
+ 
+        resp.getWriter().print(
             gson.toJson("PATCH works")
     );}
     

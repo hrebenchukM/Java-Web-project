@@ -16,6 +16,7 @@ import learning.itstep.javaweb222.data.dto.AccessToken;
 import learning.itstep.javaweb222.data.dto.User;
 import learning.itstep.javaweb222.data.dto.UserAccess;
 import learning.itstep.javaweb222.data.jwt.JwtToken;
+import learning.itstep.javaweb222.services.Signature.SignatureService;
 
 
 
@@ -23,10 +24,12 @@ import learning.itstep.javaweb222.data.jwt.JwtToken;
 @Singleton
 public class UserServlet extends HttpServlet {
     private final DataAccessor dataAccessor;
+    private final SignatureService signatureService;
      private final Gson gson = new Gson();
     @Inject
-    public UserServlet(DataAccessor dataAccessor) {
+    public UserServlet(DataAccessor dataAccessor, SignatureService signatureService) {
         this.dataAccessor = dataAccessor;
+        this.signatureService = signatureService;
     }
         
     
@@ -83,10 +86,16 @@ public class UserServlet extends HttpServlet {
         }
         AccessToken at = dataAccessor.getTokenByUserAccess(ua);
         JwtToken jwt = JwtToken.fromAccessToken(at);
-        
+        jwt.setSignature(
+            Base64.getEncoder().encodeToString(
+                    signatureService.getSignatureBytes(jwt.getBody(), "secret")
+            )
+        );
+
+
         resp.setHeader("Content-Type", "application/json");
         resp.getWriter().print(
-                gson.toJson(jwt)
+                jwt.toString()
         );
         
 //     System.out.println("UserServlet::doGet");  // вивід до out сервера (Apache)
@@ -100,8 +109,10 @@ public class UserServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
       
+        
         resp.getWriter().print(
-                gson.toJson("POST works")
+                gson.toJson("POST works. JWT : "+ req.getAttribute("JWT")+ 
+                        ",status: " + req.getAttribute("JwtStatus"))
         );
     }
 

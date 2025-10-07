@@ -12,11 +12,14 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import learning.itstep.javaweb222.data.dto.AccessToken;
+import learning.itstep.javaweb222.data.dto.ProductGroup;
 import learning.itstep.javaweb222.data.dto.User;
 import learning.itstep.javaweb222.data.dto.UserAccess;
 import learning.itstep.javaweb222.services.config.ConfigService;
@@ -279,6 +282,28 @@ public class DataAccessor {
             return false;
         }
         
+        
+        //---------------added 10.07-------------------------
+              sql = "CREATE TABLE  IF NOT EXISTS  product_groups("
+                + "pg_id   CHAR(36)    PRIMARY KEY,"
+                + "pg_parent_id CHAR(36)     NULL,"
+                + "pg_name VARCHAR(64) NOT NULL,"
+                + "pg_description   TEXT NOT NULL,"
+                + "pg_slug   VARCHAR(64)    NOT NULL,"
+                + "pg_image_url      VARCHAR(256)    NOT NULL,"
+                +"pg_deleted_at DATETIME NULL,"
+                + "UNIQUE(pg_slug)"
+                + ")ENGINE = INNODB, "
+                + " DEFAULT CHARSET = utf8mb4, "
+                + " COLLATE utf8mb4_unicode_ci";
+        try(Statement statement = this.getConnection().createStatement()) {
+            statement.executeUpdate(sql);
+        }
+        catch(SQLException ex) {
+            logger.log(Level.WARNING, "DataAccessor::install " 
+                    + ex.getMessage() + " | " + sql);
+            return false;
+        }
         return true;
     }
     
@@ -373,5 +398,28 @@ public class DataAccessor {
             "DateAccessor::getDbTime " + ex.getMessage() + " | " + sql);
       }
     return null;
+    }
+    
+    
+    
+    
+    
+    /////////////////////////////Admin//////////////////////
+    public List <ProductGroup> adminGetProductGroups(){
+        String sql = "SELECT * FROM product_groups";
+        List<ProductGroup> ret = new ArrayList<>();
+        try(Statement statement = getConnection().createStatement();
+                 ResultSet rs = statement.executeQuery(sql);
+           ){
+            while(rs.next())
+            {
+                ret.add(ProductGroup.fromResultSet(rs));
+            }
+        }
+         catch(SQLException ex) {
+            logger.log(Level.WARNING, "DataAccessor::adminGetProductGroups " 
+                    + ex.getMessage() + " | " + sql);
+        }
+            return ret;
     }
 }

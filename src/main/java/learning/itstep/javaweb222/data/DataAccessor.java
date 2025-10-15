@@ -41,6 +41,49 @@ public class DataAccessor {
         this.kdfService = kdfService;
     }
 
+
+     public List<ProductGroup> getProductGroups() {
+        String sql = "SELECT * FROM product_groups WHERE pg_deleted_at IS NULL";
+        List<ProductGroup> ret = new ArrayList<>();
+        try(Statement statement = getConnection().createStatement();                
+            ResultSet rs = statement.executeQuery(sql)
+        ) {
+           while(rs.next()) {
+                ret.add(ProductGroup.fromResultSet(rs));
+            }
+        }
+        catch(SQLException ex) {
+            logger.log(Level.WARNING, "DataAccessor::getProductGroups " 
+                    + ex.getMessage() + " | " + sql);
+        }
+        return ret;
+    }
+ 
+    public void addProductGroup(ProductGroup productGroup){
+     if(productGroup.getId()==null){
+         productGroup.setId(getDbIdentity());
+     }
+    String sql = "INSERT INTO product_groups(pg_id, pg_parent_id, pg_name,"
+                + "pg_description,pg_slug,pg_image_url) VALUES(?,?,?,?,?,?)";
+    try(PreparedStatement prep = getConnection().prepareStatement(sql))
+    {
+        prep.setString(1, productGroup.getId().toString());
+         UUID parentId = productGroup.getParentId();
+         prep.setString(2, parentId==null? null : parentId.toString());
+         
+          prep.setString(3, productGroup.getName());
+           prep.setString(4, productGroup.getDescription());
+            prep.setString(5, productGroup.getSlug());
+             prep.setString(6, productGroup.getImageUrl());
+             prep.executeUpdate();
+    }
+    catch (SQLException ex) {
+        logger.log(Level.WARNING, "DataAccessor::addProductGroup "
+                + ex.getMessage() + " | " + sql);
+           throw new RuntimeException(ex.getMessage());
+        
+    }
+    }
     public AccessToken getTokenByUserAccess(UserAccess ua) {
     AccessToken at = new AccessToken();
     at.setTokenId(UUID.randomUUID());

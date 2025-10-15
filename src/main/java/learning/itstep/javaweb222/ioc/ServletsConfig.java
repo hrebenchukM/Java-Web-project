@@ -23,6 +23,7 @@ public class ServletsConfig extends ServletModule {
         serve("/user").with(UserServlet.class);
         serve("/admin/*").with(AdminServlet.class);
         serve("/file/*").with(FileServlet.class);
+       serve("/groups").with(GroupsServlet.class);
       
     }
 }

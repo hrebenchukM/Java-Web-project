@@ -107,13 +107,13 @@ public class AdminServlet extends HttpServlet {
             }
             if(fields.get("pg-slug") == null || fields.get("pg-slug").isBlank()) {
             resp.setStatus(400);
-            resp.getWriter().print(gson.toJson("Поле 'Slug' обов'язкове"));
+            resp.getWriter().print(gson.toJson("Field 'Slug' is required"));
             return;
             }
             
             if(fields.get("pg-description") == null || fields.get("pg-description").isBlank()) {
             resp.setStatus(400);
-            resp.getWriter().print(gson.toJson("Поле 'Опис' обов'язкове"));
+            resp.getWriter().print(gson.toJson("Field 'Description' is required"));
             return;
             }
             
@@ -122,7 +122,7 @@ public class AdminServlet extends HttpServlet {
                                 .anyMatch(g -> g.getSlug().equals(fields.get("pg-slug")));
             if(slugExists) {
             resp.setStatus(400);
-            resp.getWriter().print(gson.toJson("Група з таким slug вже існує"));
+            resp.getWriter().print(gson.toJson("Group with such slug exists"));
             return;
             }
             
@@ -166,7 +166,26 @@ public class AdminServlet extends HttpServlet {
             Collection<FileItem> files = res.getFiles().values();
             Map<String, String> fields = res.getFields();
             
-            Product product = new Product();
+            
+              
+            if(fields.get("product-name") == null || fields.get("product-name").isBlank()) {
+            resp.setStatus(400);
+            resp.getWriter().print(gson.toJson("Field 'Name' is required"));
+            return;
+            }
+            if(fields.get("product-price") == null || fields.get("product-price").isBlank()) {
+            resp.setStatus(400);
+            resp.getWriter().print(gson.toJson("Field 'Price' is required"));
+            return;
+            }
+        
+            if(fields.get("product-stock") == null || fields.get("product-stock").isBlank()) {
+            resp.setStatus(400);
+            resp.getWriter().print(gson.toJson("Field 'Stock' is required"));
+            return;
+            } 
+            
+          Product product = new Product();
             product.setName(fields.get("product-name"));
             product.setDescription(fields.get("product-description"));
             product.setSlug(fields.get("product-slug"));
@@ -181,6 +200,7 @@ public class AdminServlet extends HttpServlet {
             else{
                 throw new FormParseException("product-group-id reqiered");
             }
+            
             if(!files.isEmpty()) {
             product.setImageUrl(
                     storageService.save(files.stream().findFirst().get()));
@@ -195,6 +215,10 @@ public class AdminServlet extends HttpServlet {
             resp.setStatus(400);
             resp.getWriter().print(
                     gson.toJson(ex.getMessage()));
+        }
+        catch(Exception ex) {
+        resp.setStatus(500);
+        resp.getWriter().print(gson.toJson("Помилка сервера"));
         }
     }
     

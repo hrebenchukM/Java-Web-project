@@ -1,4 +1,3 @@
-
 package learning.itstep.javaweb222.data.dto;
 
 import java.sql.ResultSet;

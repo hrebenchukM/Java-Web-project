@@ -1,4 +1,3 @@
-
 package learning.itstep.javaweb222.data.jwt;
 
 public class JwtHeader {
@@ -25,5 +24,6 @@ public class JwtHeader {
     public void setTyp(String typ) {
         this.typ = typ;
     }
-           
+    
+    
 }

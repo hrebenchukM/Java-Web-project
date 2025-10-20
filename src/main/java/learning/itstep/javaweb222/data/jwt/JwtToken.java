@@ -1,4 +1,3 @@
-
 package learning.itstep.javaweb222.data.jwt;
 
 import com.google.gson.Gson;
@@ -6,37 +5,32 @@ import java.util.Base64;
 import java.util.Base64.Encoder;
 import java.util.Date;
 import learning.itstep.javaweb222.data.dto.AccessToken;
-import learning.itstep.javaweb222.data.dto.UserAccess;
-
 
 public class JwtToken {
-private final static Gson gson = new Gson();
-
-  
-   private JwtHeader header;
-   private JwtPayload payload;
-   private String signature;
-
-    public static JwtToken fromParts(String[]parts)
-    {
+    private final static Gson gson = new Gson();
+    
+    private JwtHeader  header;
+    private JwtPayload payload;
+    private String     signature;
+    
+    public static JwtToken fromParts(String[] parts) {
         JwtToken jwt = new JwtToken();
-        jwt.setHeader(
+        jwt.setHeader( 
                 gson.fromJson( 
-                    new String (Base64.getDecoder().decode(parts[0])),
-                        JwtHeader.class
+                    new String( Base64.getDecoder().decode(parts[0]) ),
+                    JwtHeader.class
                 )
-              );
-              
-         jwt.setPayload(
+        );
+        jwt.setPayload(
                 gson.fromJson( 
-                    new String (Base64.getDecoder().decode(parts[1])),
-                        JwtPayload.class
+                    new String( Base64.getDecoder().decode(parts[1]) ),
+                    JwtPayload.class
                 )
-              );
-         jwt.setSignature(parts[2]);
+        );
+        jwt.setSignature(parts[2]);
         return jwt;
     }
-
+    
     public static JwtToken fromAccessToken(AccessToken at) {
         JwtToken jwt = new JwtToken();
         jwt.setHeader( new JwtHeader() );
@@ -48,32 +42,26 @@ private final static Gson gson = new Gson();
         payload.setIss("JavaWeb222");
         payload.setSub(at.getUserAccess().getUserId().toString());
         Date dob = at.getUserAccess().getUser().getBirthdate();
-       if(dob!=null){
-           payload.setDob(dob.toString());
-       }
+        if( dob != null ) {
+            payload.setDob( dob.toString() );
+        }
         payload.setName(at.getUserAccess().getUser().getName());
         payload.setEmail(at.getUserAccess().getUser().getEmail());
-        
         jwt.setPayload(payload);
         return jwt;
     }
-
-    
     
     public String getBody() {
         Encoder encoder = Base64.getEncoder();
-        return encoder.encodeToString(gson.toJson(header).getBytes())
-                + "." +
-               encoder.encodeToString(gson.toJson(payload).getBytes()) ;
+        return  encoder.encodeToString( gson.toJson(header).getBytes() ) +
+                "." +
+                encoder.encodeToString( gson.toJson(payload).getBytes() );
     }
-    
+
     @Override
     public String toString() {
-//        return "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dnZWRJbkFzIjoiYWRtaW4iLCJpYXQiOjE0MjI3Nzk2Mzh9.gzSraSYS8EXBxLN _oWnFSRgCzcmJmMjLiuyu5CSpyHI=";
-  
-    return getBody()+"."+ signature;
+        return getBody() + "." + signature;
     }
-    
     
     
     public JwtHeader getHeader() {
@@ -99,6 +87,6 @@ private final static Gson gson = new Gson();
     public void setSignature(String signature) {
         this.signature = signature;
     }
-   
-   
+
+    
 }

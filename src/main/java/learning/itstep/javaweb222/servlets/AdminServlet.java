@@ -26,11 +26,16 @@ public class AdminServlet extends HttpServlet {
     private final DataAccessor dataAccessor;
     private final FormParseService formParseService;
     private final StorageService storageService;
+
     @Inject
-    public AdminServlet(DataAccessor dataAccessor, FormParseService formParseService,StorageService storageService) {
+    public AdminServlet(
+            DataAccessor dataAccessor, 
+            FormParseService formParseService,
+            StorageService storageService
+    ) {
         this.dataAccessor = dataAccessor;
         this.formParseService = formParseService;
-        this.storageService =storageService;
+        this.storageService = storageService;
     }
 
     @Override
@@ -81,46 +86,69 @@ public class AdminServlet extends HttpServlet {
     }
     
     private void postGroup(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-      String savedName= "No files";
         resp.setContentType("application/json");
         try {
             FormParseResult res = formParseService.parse(req);
-            Collection<FileItem>files = res.getFiles().values();
-            if(files.isEmpty())
-            {
-             throw new FormParseException("Image file required");
+            Collection<FileItem> files = res.getFiles().values();
+            if(files.isEmpty()) {
+                throw new FormParseException("Image file required");
             }
-              savedName =  storageService.save(files.stream().findFirst().get());
-            Map<String,String> fields = res.getFields();
+            Map<String, String> fields = res.getFields();
+            
+            
+            
+            
+            
+            if(fields.get("pg-name") == null || fields.get("pg-name").isBlank()) {
+            resp.setStatus(400);
+            resp.getWriter().print(gson.toJson("Поле 'Назва' обов'язкове"));
+            return;
+            }
+            if(fields.get("pg-slug") == null || fields.get("pg-slug").isBlank()) {
+            resp.setStatus(400);
+            resp.getWriter().print(gson.toJson("Поле 'Slug' обов'язкове"));
+            return;
+            }
+            
+            boolean slugExists = dataAccessor.adminGetProductGroups()
+                                .stream()
+                                .anyMatch(g -> g.getSlug().equals(fields.get("pg-slug")));
+            if(slugExists) {
+            resp.setStatus(400);
+            resp.getWriter().print(gson.toJson("Група з таким slug вже існує"));
+            return;
+            }
+            
+            
+            
+            
+            
             ProductGroup productGroup = new ProductGroup();
             productGroup.setName(fields.get("pg-name"));
             productGroup.setDescription(fields.get("pg-description"));
             productGroup.setSlug(fields.get("pg-slug"));
             String parentId = fields.get("pg-parent-id");
-            if(parentId!=null && !parentId.isBlank()){
+            if(parentId != null && !parentId.isBlank()) {
                 productGroup.setParentId(UUID.fromString(parentId));
             }
-            productGroup.setImageUrl(savedName);
+            productGroup.setImageUrl(
+                    storageService.save(files.stream().findFirst().get()));
             dataAccessor.addProductGroup(productGroup);
-            
-             resp.getWriter().print(
-                gson.toJson("Ok")
-        );
+            resp.getWriter().print(
+                    gson.toJson("Ok")
+            );
         }
-         
         catch(FormParseException ex) {
             resp.setStatus(400);
             resp.getWriter().print(
-
-                gson.toJson(ex.getMessage())
-             );
-            return;
+                    gson.toJson(ex.getMessage()));
         }
-      
-      
+        
     }
 }
 /*
-Д.З. Реалізувати інструментарій адміністратора у власному курсовому проєкті.
-Прикласти посилання на репозиторії та додати скріншоти роботи
+Д.З. Реалізувати валідацію даних на створення нової групи.
+За умов приходу неправильних даних надсилати відповідні 
+статуси та повідомлення від бекенду
+* додати відповідні елементи на фронтенді
 */

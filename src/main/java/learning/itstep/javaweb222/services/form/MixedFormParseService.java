@@ -26,6 +26,7 @@ public class MixedFormParseService implements FormParseService {
     public MixedFormParseService() {
         //DiskFileItemFactory  factory = new DiskFileItemFactory();
         //factory.setSizeThreshold(100000);
+        
         upload = new JakartaServletDiskFileUpload();
         upload.setFileCountMax(10);
         upload.setFileSizeMax(1000000);

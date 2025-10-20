@@ -1,4 +1,3 @@
-
 package learning.itstep.javaweb222.data;
 
 import com.google.inject.Inject;
@@ -11,7 +10,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -20,11 +18,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import learning.itstep.javaweb222.data.dto.AccessToken;
 import learning.itstep.javaweb222.data.dto.ProductGroup;
-import learning.itstep.javaweb222.data.dto.User;
 import learning.itstep.javaweb222.data.dto.UserAccess;
 import learning.itstep.javaweb222.services.config.ConfigService;
 import learning.itstep.javaweb222.services.kdf.KdfService;
-
 
 @Singleton
 public class DataAccessor {
@@ -40,15 +36,14 @@ public class DataAccessor {
         this.logger = logger;
         this.kdfService = kdfService;
     }
-
-
+    
      public List<ProductGroup> getProductGroups() {
         String sql = "SELECT * FROM product_groups WHERE pg_deleted_at IS NULL";
         List<ProductGroup> ret = new ArrayList<>();
         try(Statement statement = getConnection().createStatement();                
             ResultSet rs = statement.executeQuery(sql)
         ) {
-           while(rs.next()) {
+            while(rs.next()) {
                 ret.add(ProductGroup.fromResultSet(rs));
             }
         }
@@ -58,128 +53,65 @@ public class DataAccessor {
         }
         return ret;
     }
- 
-    public void addProductGroup(ProductGroup productGroup){
-     if(productGroup.getId()==null){
-         productGroup.setId(getDbIdentity());
-     }
-    String sql = "INSERT INTO product_groups(pg_id, pg_parent_id, pg_name,"
-                + "pg_description,pg_slug,pg_image_url) VALUES(?,?,?,?,?,?)";
-    try(PreparedStatement prep = getConnection().prepareStatement(sql))
-    {
-        prep.setString(1, productGroup.getId().toString());
-         UUID parentId = productGroup.getParentId();
-         prep.setString(2, parentId==null? null : parentId.toString());
-         
-          prep.setString(3, productGroup.getName());
-           prep.setString(4, productGroup.getDescription());
-            prep.setString(5, productGroup.getSlug());
-             prep.setString(6, productGroup.getImageUrl());
-             prep.executeUpdate();
-    }
-    catch (SQLException ex) {
-        logger.log(Level.WARNING, "DataAccessor::addProductGroup "
-                + ex.getMessage() + " | " + sql);
-           throw new RuntimeException(ex.getMessage());
-        
-    }
-    }
-    public AccessToken getTokenByUserAccess(UserAccess ua) {
-    AccessToken at = new AccessToken();
-    at.setTokenId(UUID.randomUUID());
-    at.setIssuedAt(new Date());
-    at.setExpiredAt(new Date(at.getIssuedAt().getTime() + 1000 * 60 * 10));
-    at.setUserAccessId(ua.getId());
-    at.setUserAccess(ua);
-
-    String sqlCheck = """
-        SELECT token_id, expired_at 
-        FROM tokens 
-        WHERE user_access_id = ? 
-          AND expired_at > NOW()
-        ORDER BY expired_at DESC
-        LIMIT 1
-    """;
-
-    String sql;
-    boolean updateMode = false;
-
-    try (PreparedStatement prep = this.getConnection().prepareStatement(sqlCheck)) {
-        prep.setString(1, ua.getId().toString());
-        ResultSet rs = prep.executeQuery();
-        if (rs.next()) {
-            // Є активний токен → оновлюємо час
-            updateMode = true;
-            at.setTokenId(UUID.fromString(rs.getString("token_id")));
-            at.setIssuedAt(new Date()); // нова видача
-            at.setExpiredAt(new Date(at.getIssuedAt().getTime() + 1000 * 60 * 10));
+    
+    
+    public void addProductGroup(ProductGroup productGroup) {
+        if(productGroup.getId() == null) {
+            productGroup.setId( getDbIdentity() );
         }
-    } catch (SQLException ex) {
-        logger.log(Level.WARNING, "DataAccessor::getTokenByUserAccess-check "
-                + ex.getMessage() + " | " + sqlCheck);
+        String sql = "INSERT INTO product_groups(pg_id, pg_parent_id, pg_name,"
+                + "pg_description, pg_slug, pg_image_url) VALUES(?,?,?,?,?,?)";
+        try( PreparedStatement prep = getConnection().prepareStatement(sql)) {
+            prep.setString(1, productGroup.getId().toString());
+            UUID parentId = productGroup.getParentId();
+            prep.setString(2, parentId == null ? null : parentId.toString());
+            prep.setString(3, productGroup.getName());
+            prep.setString(4, productGroup.getDescription());
+            prep.setString(5, productGroup.getSlug());
+            prep.setString(6, productGroup.getImageUrl());
+            prep.executeUpdate();
+        }
+        catch(SQLException ex) {
+            logger.log(Level.WARNING, "DataAccessor::addProductGroup " 
+                    + ex.getMessage() + " | " + sql);
+            throw new RuntimeException(ex.getMessage());
+        }
     }
-
-    if (updateMode) {
-        sql = """
-            UPDATE tokens 
-            SET issued_at = ?, expired_at = ?
-            WHERE token_id = ?
+    
+    public AccessToken getTokenByUserAccess(UserAccess ua) {
+        AccessToken at = new AccessToken();
+        at.setTokenId(UUID.randomUUID());
+        at.setIssuedAt(new Date());
+        at.setExpiredAt( new Date( at.getIssuedAt().getTime() + 1000 * 60 * 10 ) );
+        at.setUserAccessId(ua.getId());
+        at.setUserAccess(ua);
+        /*
+        Д.З. DataAccessor::getTokenByUserAccess
+        модифікувати алгоритм формування токена доступу:
+        якщо у користувача є активний токен (ще не прострочений), то оновити
+        у БД його термін дії (+10 хв від поточного часу), новий токен не створювати.
+        Якщо активного токена немає або він вже вичерпав термін, то створювати
+        новий.
+        (технічними словами, запит SQL буде або UPDATE або INSERT)
+        */
+        String sql = """
+                INSERT INTO tokens(token_id,user_access_id,issued_at,expired_at)
+                VALUES(?,?,?,?)
         """;
-    } else {
-        sql = """
-            INSERT INTO tokens(token_id,user_access_id,issued_at,expired_at)
-            VALUES(?,?,?,?)
-        """;
-    }
-
-    try (PreparedStatement prep = this.getConnection().prepareStatement(sql)) {
-        if (updateMode) {
-            prep.setTimestamp(1, new Timestamp(at.getIssuedAt().getTime()));
-            prep.setTimestamp(2, new Timestamp(at.getExpiredAt().getTime()));
-            prep.setString(3, at.getTokenId().toString());
-        } else {
+        try(PreparedStatement prep = this.getConnection().prepareStatement(sql)) {
             prep.setString(1, at.getTokenId().toString());
             prep.setString(2, at.getUserAccessId().toString());
             prep.setTimestamp(3, new Timestamp(at.getIssuedAt().getTime()));
             prep.setTimestamp(4, new Timestamp(at.getExpiredAt().getTime()));
+            prep.executeUpdate();
         }
-        prep.executeUpdate();
-    } catch (SQLException ex) {
-        logger.log(Level.WARNING, "DataAccessor::getTokenByUserAccess "
-                + ex.getMessage() + " | " + sql);
+        catch(SQLException ex) {
+            logger.log(Level.WARNING, "DataAccessor::getTokenByUserAccess " 
+                    + ex.getMessage() + " | " + sql);
+        }
+        return at;
     }
-
-    return at;
-}
-
-//    public AccessToken getTokenByUserAccess(UserAccess ua) {
-//        AccessToken at = new AccessToken();
-//        at.setTokenId(UUID.randomUUID());
-//        at.setIssuedAt(new Date());
-//        at.setExpiredAt( new Date( at.getIssuedAt().getTime() + 1000 * 60 * 10 ) );
-//        at.setUserAccessId(ua.getId());
-//        at.setUserAccess(ua);
-//        
-//        
-//       
-//        String sql = """
-//                INSERT INTO tokens(token_id,user_access_id,issued_at,expired_at)
-//                VALUES(?,?,?,?)
-//        """;
-//        try(PreparedStatement prep = this.getConnection().prepareStatement(sql)) {
-//            prep.setString(1, at.getTokenId().toString());
-//            prep.setString(2, at.getUserAccessId().toString());
-//            prep.setTimestamp(3, new Timestamp(at.getIssuedAt().getTime()));
-//            prep.setTimestamp(4, new Timestamp(at.getExpiredAt().getTime()));
-//            prep.executeUpdate();
-//        }
-//        catch(SQLException ex) {
-//            logger.log(Level.WARNING, "DataAccessor::getTokenByUserAccess " 
-//                    + ex.getMessage() + " | " + sql);
-//        }
-//        return at;
-//    }
-//    
+    
     public UserAccess getUserAccessByCredentials(String login, String password) {
         String sql = """
             SELECT 
@@ -188,8 +120,6 @@ public class DataAccessor {
                user_accesses ua 
                JOIN users u ON ua.user_id = u.user_id 
             WHERE ua.login = ?""";
-        
-
         try(PreparedStatement prep = this.getConnection().prepareStatement(sql)) {
             prep.setString(1, login);
             ResultSet rs = prep.executeQuery();
@@ -324,17 +254,15 @@ public class DataAccessor {
                     + ex.getMessage() + " | " + sql);
             return false;
         }
-        
-        
-        //---------------added 10.07-------------------------
-              sql = "CREATE TABLE  IF NOT EXISTS  product_groups("
-                + "pg_id   CHAR(36)    PRIMARY KEY,"
-                + "pg_parent_id CHAR(36)     NULL,"
-                + "pg_name VARCHAR(64) NOT NULL,"
-                + "pg_description   TEXT NOT NULL,"
-                + "pg_slug   VARCHAR(64)    NOT NULL,"
-                + "pg_image_url      VARCHAR(256)    NOT NULL,"
-                +"pg_deleted_at DATETIME NULL,"
+        // ------------------ Added 2025-10-07 ----------------
+        sql = "CREATE TABLE  IF NOT EXISTS  product_groups("
+                + "pg_id          CHAR(36)     PRIMARY KEY,"
+                + "pg_parent_id   CHAR(36)         NULL,"
+                + "pg_name        VARCHAR(64)  NOT NULL,"
+                + "pg_description TEXT         NOT NULL,"
+                + "pg_slug        VARCHAR(64)  NOT NULL,"
+                + "pg_image_url   VARCHAR(256) NOT NULL,"
+                + "pg_deleted_at  DATETIME         NULL,"
                 + "UNIQUE(pg_slug)"
                 + ")ENGINE = INNODB, "
                 + " DEFAULT CHARSET = utf8mb4, "
@@ -347,6 +275,7 @@ public class DataAccessor {
                     + ex.getMessage() + " | " + sql);
             return false;
         }
+        
         return true;
     }
     
@@ -425,44 +354,30 @@ public class DataAccessor {
         return true;
     }
     
-    public LocalDateTime getDbTime() 
-    {
-      String sql = "SELECT NOW()";
-      try (Statement statement = this.getConnection().createStatement()) 
-      {
-        ResultSet rs = statement.executeQuery(sql);
-        rs.next();
-        Timestamp ts = rs.getTimestamp(1);
-        return ts.toLocalDateTime();
-      }
-      catch (SQLException ex) 
-      {
-        logger.log(Level.WARNING,
-            "DateAccessor::getDbTime " + ex.getMessage() + " | " + sql);
-      }
-    return null;
-    }
-    
-    
-    
-    
-    
-    /////////////////////////////Admin//////////////////////
-    public List <ProductGroup> adminGetProductGroups(){
+    // ------------------- Admin ------------------------------
+    public List<ProductGroup> adminGetProductGroups() {
         String sql = "SELECT * FROM product_groups";
         List<ProductGroup> ret = new ArrayList<>();
-        try(Statement statement = getConnection().createStatement();
-                 ResultSet rs = statement.executeQuery(sql);
-           ){
-            while(rs.next())
-            {
+        try(Statement statement = getConnection().createStatement();                
+            ResultSet rs = statement.executeQuery(sql)
+        ) {
+            while(rs.next()) {
                 ret.add(ProductGroup.fromResultSet(rs));
             }
         }
-         catch(SQLException ex) {
+        catch(SQLException ex) {
             logger.log(Level.WARNING, "DataAccessor::adminGetProductGroups " 
                     + ex.getMessage() + " | " + sql);
         }
-            return ret;
+        return ret;
+    }
+    
+    public void adminAddProductGroup() {
+        
     }
 }
+/*
+Д.З. Реалізувати ініціалізацію даних (БД) у власному курсовому проєкті
+Закласти проєкт з фронтендом.
+Прикласти до звіту два посилання на репозиторії бек- та фронт- частин
+*/

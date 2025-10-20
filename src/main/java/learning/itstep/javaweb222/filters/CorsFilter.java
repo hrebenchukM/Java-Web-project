@@ -1,4 +1,3 @@
-
 package learning.itstep.javaweb222.filters;
 
 import com.google.inject.Inject;
@@ -25,45 +24,43 @@ public class CorsFilter implements Filter {
         this.logger = logger;
     }
     
-    
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
-    this.filterConfig = filterConfig;
+        this.filterConfig = filterConfig;
     }
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
-       //узгоджння типів для роботи з Http - протоколом
+        // узгодження типів для роботи з НТТР-протоколом
         HttpServletRequest req = (HttpServletRequest)request;
         HttpServletResponse resp = (HttpServletResponse)response;
-           //прямий хід - оброблення запиту (request)
-     
-       
-        chain.doFilter(request, response); // next
-        //зворотній хід - оброблення відповіді (response)
-         resp.setHeader("Access-Control-Allow-Origin", "http://localhost:5173"); 
-
-        // logger.log(Level.INFO,"CORS filter works");
+        
+        // прямий хід - оброблення запиту (request)
+        
          
-         if("OPTIONS".equals(req.getMethod()))
-         {
-           resp.setHeader("Access-Control-Allow-Headers", req.getHeader("Access-Control-Request-Headers"));
-           resp.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
-         }
+        chain.doFilter(request, response);   // next
+        
+        // зворотній хід - оброблення відповіді (response)        
+        resp.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");
+        // logger.log(Level.INFO, "CORS filter works");
+        if( "OPTIONS".equals( req.getMethod() ) ) {
+            resp.setHeader("Access-Control-Allow-Headers", req.getHeader("Access-Control-Request-Headers"));
+            resp.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE");
+        }
     }
 
     @Override
     public void destroy() {
-   
+        this.filterConfig = null;
     }
     
 }
 /*
-Фільтри (сервлетні фільтри) - реалізаця концепції Middleware
-ланцюга послідовного запуску програмних модулів за схемою - передай далі.
-
-Включаюься фільтри одним з трьох варіантів:
-а)У класы web.xml (див. зразок з GuiceFilter)
+Фільтри (сервлетні фільтри) - реалізація концепції Middleware - 
+ланцюга послідовного запуску програмних модулів за схемою 
+"передай далі"
+Включаються фільтри одним з трьох варіантів:
+а) у файлі web.xml (див. зразок з GuiceFilter)
 б) анотацією @WebFilter("/*")
 в) системою IoC (див. ServletsConfig)
 */

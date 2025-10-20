@@ -1,12 +1,10 @@
-
 package learning.itstep.javaweb222.services.kdf;
 
 /**
- *
- * @author Lenovo
- * * Key derivation function
-* by RFC 2898 https://datatracker.ietf.org/doc/html/rfc2898
+ * Key derivation function
+ * by RFC 2898 https://datatracker.ietf.org/doc/html/rfc2898
+ * @author Lector
  */
 public interface KdfService {
-    String dk(String password,String salt);
+    String dk(String password, String salt);
 }

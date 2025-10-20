@@ -1,4 +1,3 @@
-
 package learning.itstep.javaweb222.servlets;
 
 import com.google.gson.Gson;
@@ -28,30 +27,23 @@ public class GroupsServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         List<ProductGroup> groups = dataAccessor.getProductGroups();
         String fileUrl = String.format("%s://%s:%d%s/file/", 
-                req.getScheme() ,
-                req.getServerName() ,
+                req.getScheme(),
+                req.getServerName(),
                 req.getServerPort(),
-                req.getContextPath()
-                );
-        for(ProductGroup group : groups){
-         group.setImageUrl(fileUrl + group.getImageUrl());
+                req.getContextPath());
+        for(ProductGroup group : groups) {
+            group.setImageUrl( fileUrl + group.getImageUrl() );
         }
-      resp.setCharacterEncoding(StandardCharsets.UTF_8);
+        resp.setCharacterEncoding(StandardCharsets.UTF_8);
         resp.setContentType("application/json");
         resp.getWriter().print(
-          gson.toJson(groups)
-  );
-    }
+                gson.toJson(groups)
+        );
+    }    
     // req.getServletPath()  /groups
-
     // req.getContextPath()  /JavaWeb222
-
     // req.getRequestURI()   /JavaWeb222/groups
-
     // req.getServerName()   localhost
-
     // req.getScheme()       http
-
     // req.getServerPort()   8080
- 
 }

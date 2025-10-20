@@ -1,4 +1,3 @@
-
 package learning.itstep.javaweb222.services.config;
 
 import com.google.gson.Gson;
@@ -15,58 +14,58 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @Singleton
-public class JsonConfigService implements ConfigService{
-  private static final Gson gson = new Gson();
-  private JsonElement root;
-  private final Logger logger;
-  
-  @Inject 
-   public JsonConfigService(Logger logger) {
-       this.logger = logger;
+public final class JsonConfigService implements ConfigService {
+    static private final Gson gson = new Gson();
+    private final Logger logger;
+    private JsonElement root;
+    
+    @Inject
+    public JsonConfigService(Logger logger) {
+        this.logger = logger;
     }
-   
+
     @Override
     public void addFile(String filename) {
-try(InputStream inputStream = Objects.requireNonNull(
+        try(InputStream inputStream = Objects.requireNonNull(
                 this
                     .getClass()
                     .getClassLoader()
                     .getResourceAsStream(filename));
-            Reader reader = new InputStreamReader(inputStream)
+            Reader reader = 
+                    new InputStreamReader(inputStream)
         ) {
-         root = gson.fromJson(reader, JsonElement.class);
+            root = gson.fromJson(reader, JsonElement.class);
         }
         catch(IOException ex) {
-        this.logger.log(Level.SEVERE,ex.getMessage());
-        }
-    }
+            this.logger.log(Level.SEVERE, ex.getMessage());
+        }        
+    }    
 
-   
+    @Override
     public String get(String path) {
-        if (root == null){     
-       this.addFile("appsettings.json");
+        if(root == null) {            
+            this.addFile("appsettings.json");
         }
-        String [] parts = path.split("\\.");
+        
+        String[] parts = path.split("\\.");
         JsonObject jsonObject = root.getAsJsonObject();
-        for(int i = 0; i< parts.length-1;i++ )
-        {
+        for (int i = 0; i < parts.length - 1; i++) {
             JsonElement element = jsonObject.get(parts[i]);
-           if(element == null || !element.isJsonObject()) {
+            if(element == null || !element.isJsonObject()) {
                 throw new NoSuchFieldError(
                         "JsonConfigService: Error accessing field '" 
                                 + parts[i]
                         + "'. Field either absent or not an object"
                 );
             }
-            jsonObject=element.getAsJsonObject();
+            jsonObject = element.getAsJsonObject();            
         }
         return jsonObject.get(parts[parts.length - 1]).getAsString();
-//          root.getAsJsonObject()
-//                  .get("connectionStrings").getAsJsonObject()
-//                  .get("mainDb").getAsString()
-       
+        /*
+        root.getAsJsonObject()
+                .get("connectionStrings").getAsJsonObject()
+                .get("mysql").getAsJsonObject()
+                .get("mainDb").getAsString() */
     }
-
-   
     
 }

@@ -1,4 +1,3 @@
-
 package learning.itstep.javaweb222.data.dto;
 
 import java.sql.ResultSet;
@@ -8,14 +7,12 @@ import java.util.Date;
 import java.util.UUID;
 
 public class AccessToken {
-    
     private UUID tokenId;
     private UUID userAccessId;
     private Date issuedAt;
     private Date expiredAt;
     
     private UserAccess userAccess;
-
     
     public static AccessToken fromResultSet(ResultSet rs) throws SQLException {
         AccessToken t = new AccessToken();
@@ -32,8 +29,7 @@ public class AccessToken {
         
         return t;
     }
-    
-    
+
     public UUID getTokenId() {
         return tokenId;
     }
@@ -74,7 +70,8 @@ public class AccessToken {
         this.userAccess = userAccess;
     }
     
+    
 }
 /*
-token_id,user_access_id,issued_at,expired_at
+"token_id,user_access_id,issued_at,expired_at     DATETIME NULL"
 */

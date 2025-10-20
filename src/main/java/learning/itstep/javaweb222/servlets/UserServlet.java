@@ -1,41 +1,35 @@
 package learning.itstep.javaweb222.servlets;
- 
+
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import jakarta.servlet.ServletException;
-//import jakarta.servlet.annotation.WebServlet;
+// import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Base64;
-import java.util.UUID;
 import learning.itstep.javaweb222.data.DataAccessor;
 import learning.itstep.javaweb222.data.dto.AccessToken;
-import learning.itstep.javaweb222.data.dto.User;
 import learning.itstep.javaweb222.data.dto.UserAccess;
 import learning.itstep.javaweb222.data.jwt.JwtToken;
 import learning.itstep.javaweb222.services.Signature.SignatureService;
 
-
-
-//@WebServlet("/user")
 @Singleton
 public class UserServlet extends HttpServlet {
     private final DataAccessor dataAccessor;
     private final SignatureService signatureService;
-     private final Gson gson = new Gson();
+    private final Gson gson = new Gson();
+        
     @Inject
     public UserServlet(DataAccessor dataAccessor, SignatureService signatureService) {
         this.dataAccessor = dataAccessor;
         this.signatureService = signatureService;
     }
-        
-    
+
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-       
         // Автентифікація за RFC 7617                         // Authorization: Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==
         String authHeader = req.getHeader("Authorization");   // Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==
         if(authHeader == null || "".equals(authHeader)) {
@@ -76,9 +70,8 @@ public class UserServlet extends HttpServlet {
         }
         
         UserAccess ua = dataAccessor.getUserAccessByCredentials(parts[0], parts[1]);
-        if(ua ==null)
-        {
-              resp.setStatus(401);
+        if(ua == null) {
+            resp.setStatus(401);
             resp.getWriter().print(
                 gson.toJson("Credentials rejected. Access denied")
             );
@@ -89,57 +82,23 @@ public class UserServlet extends HttpServlet {
         jwt.setSignature(
             Base64.getEncoder().encodeToString(
                     signatureService.getSignatureBytes(jwt.getBody(), "secret")
-            )
-        );
-
-
+        ));
         resp.setHeader("Content-Type", "application/json");
-        resp.getWriter().print(
-                jwt.toString()
-        );
-        
-//     System.out.println("UserServlet::doGet");  // вивід до out сервера (Apache)
-//       // атрибут, що буде у req протягом подальшої обробки (у т.ч. на JSP)
-//        req.setAttribute("UserServlet", "Hello from UserServlet");
-//        
-//        // return View()
-//        req.getRequestDispatcher("user.jsp").forward(req, resp);
+        resp.getWriter().print( jwt.toString() );
     }
-   
+
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-      
         
         resp.getWriter().print(
-                gson.toJson("POST works. JWT : "+ req.getAttribute("JWT")+ 
-                        ",status: " + req.getAttribute("JwtStatus"))
-        );
-    }
-
-    @Override
-    protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-  
-        resp.getWriter().print(
-                gson.toJson("PUT works")
-        );
-    }
-
-    @Override
-    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-    
-        resp.getWriter().print(
-            gson.toJson("DELETE works")
-    );
-    }
-
-    @Override
-    protected void doPatch(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
- 
-        resp.getWriter().print(
-            gson.toJson("PATCH works")
-    );}
-    
-    
-    
+                gson.toJson("POST works. JWT: " + req.getAttribute("JWT") + 
+                        ", status: " + req.getAttribute("JwtStatus"))
+        );        
+    }    
     
 }
+
+/*
+Д.З. Реалізувати перевірку усіх стандартних НТТР-методів запиту
+від фронтенда до бекенда, пересвідчитись у задоволенні вимог CORS
+*/       

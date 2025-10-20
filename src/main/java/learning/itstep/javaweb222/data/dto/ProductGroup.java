@@ -1,4 +1,3 @@
-
 package learning.itstep.javaweb222.data.dto;
 
 import java.sql.ResultSet;
@@ -8,22 +7,20 @@ import java.util.Date;
 import java.util.UUID;
 
 public class ProductGroup {
-   private UUID id;
-   private UUID parentId;
-   private String name;
-   private String description;
-   private String slug;
-   private String imageUrl;
-   private Date deletedAt;
-
-   
-   
-   public static ProductGroup fromResultSet(ResultSet rs) throws SQLException {
+    private UUID   id;
+    private UUID   parentId;
+    private String name;
+    private String description;
+    private String slug;
+    private String imageUrl;
+    private Date   deletedAt;
+    
+    public static ProductGroup fromResultSet(ResultSet rs) throws SQLException {
         ProductGroup pg = new ProductGroup();
-        pg.setId(UUID.fromString( rs.getString("pg_id") ));
+        pg.setId( UUID.fromString( rs.getString("pg_id") ) );
         String parentId = rs.getString("pg_parent_id") ;
-        if(parentId!=null){
-          pg.setParentId(UUID.fromString(parentId ));
+        if(parentId != null ) {
+            pg.setParentId( UUID.fromString( parentId ) );
         }
         pg.setName( rs.getString("pg_name") );
         pg.setDescription( rs.getString("pg_description") );
@@ -31,13 +28,12 @@ public class ProductGroup {
         pg.setImageUrl( rs.getString("pg_image_url") );
         Timestamp timestamp;
         timestamp = rs.getTimestamp("pg_deleted_at");
-        if (timestamp != null) {
-           pg.setDeletedAt(new Date(timestamp.getTime()));
+        if(timestamp != null) {
+            pg.setDeletedAt( new Date( timestamp.getTime() ) );
         }
         return pg;
     }
-   
-   
+
     public UUID getId() {
         return id;
     }
@@ -93,7 +89,6 @@ public class ProductGroup {
     public void setDeletedAt(Date deletedAt) {
         this.deletedAt = deletedAt;
     }
-  
-   
-  
+    
+    
 }

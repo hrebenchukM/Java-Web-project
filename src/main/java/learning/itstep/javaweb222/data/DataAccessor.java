@@ -17,6 +17,7 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import learning.itstep.javaweb222.data.dto.AccessToken;
+import learning.itstep.javaweb222.data.dto.Product;
 import learning.itstep.javaweb222.data.dto.ProductGroup;
 import learning.itstep.javaweb222.data.dto.UserAccess;
 import learning.itstep.javaweb222.services.config.ConfigService;
@@ -37,6 +38,25 @@ public class DataAccessor {
         this.kdfService = kdfService;
     }
     
+    public ProductGroup getProductGroupBySlug(String slug) {
+        String sql = "SELECT * FROM product_groups pg "
+                + "LEFT JOIN products p ON p.product_group_id = pg.pg_id "
+                + "WHERE pg.pg_slug = ?";
+        try( PreparedStatement prep = getConnection().prepareStatement(sql)) {
+            prep.setString(1, slug);
+            ResultSet rs = prep.executeQuery();
+            if(rs.next()) {
+                return ProductGroup.fromResultSet( rs );
+            }
+            else return null;
+        }
+        catch(SQLException ex) {
+            logger.log(Level.WARNING, "DataAccessor::getProductGroupBySlug " 
+                    + ex.getMessage() + " | " + sql);
+            return null;
+        }    
+    }
+    
      public List<ProductGroup> getProductGroups() {
         String sql = "SELECT * FROM product_groups WHERE pg_deleted_at IS NULL";
         List<ProductGroup> ret = new ArrayList<>();
@@ -54,6 +74,31 @@ public class DataAccessor {
         return ret;
     }
     
+     
+    public void addProduct(Product product) {
+        if(product.getId() == null) {
+            product.setId( getDbIdentity() );
+        }
+        String sql = "INSERT INTO products(product_id, product_group_id, product_name,"
+                + "product_description, product_slug, product_image_url, product_price, "
+                + "product_stock) VALUES(?,?,?,?,?,?,?,?)";
+        try( PreparedStatement prep = getConnection().prepareStatement(sql)) {
+            prep.setString(1, product.getId().toString());
+            prep.setString(2, product.getGroupId().toString());
+            prep.setString(3, product.getName());
+            prep.setString(4, product.getDescription());
+            prep.setString(5, product.getSlug());
+            prep.setString(6, product.getImageUrl());
+            prep.setDouble(7, product.getPrice());
+            prep.setInt(8, product.getStock());
+            prep.executeUpdate();
+        }
+        catch(SQLException ex) {
+            logger.log(Level.WARNING, "DataAccessor::addProduct " 
+                    + ex.getMessage() + " | " + sql);
+            throw new RuntimeException(ex.getMessage());
+        }
+    }
     
     public void addProductGroup(ProductGroup productGroup) {
         if(productGroup.getId() == null) {
@@ -275,6 +320,32 @@ public class DataAccessor {
                     + ex.getMessage() + " | " + sql);
             return false;
         }
+        
+        
+          // ------------------ Added 2025-10-20 ----------------
+        sql = "CREATE TABLE  IF NOT EXISTS  products("
+                + "product_id          CHAR(36)     PRIMARY KEY,"
+                + "product_group_id   CHAR(36)      NOT  NULL,"
+                + "product_name        VARCHAR(64)  NOT NULL,"
+                + "product_description TEXT             NULL,"
+                + "product_slug        VARCHAR(64)      NULL,"
+                + "product_image_url   VARCHAR(256)     NULL,"
+                + "product_price   DECIMAL(12,2)    NOT NULL,"
+                + "product_stock   INT              NOT NULL,"
+                + "product_deleted_at  DATETIME         NULL,"
+                + "UNIQUE(product_slug)"
+                + ")ENGINE = INNODB, "
+                + " DEFAULT CHARSET = utf8mb4, "
+                + " COLLATE utf8mb4_unicode_ci";
+        try(Statement statement = this.getConnection().createStatement()) {
+            statement.executeUpdate(sql);
+        }
+        catch(SQLException ex) {
+            logger.log(Level.WARNING, "DataAccessor::install " 
+                    + ex.getMessage() + " | " + sql);
+            return false;
+        }
+        
         
         return true;
     }

@@ -11,18 +11,51 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 import learning.itstep.javaweb222.data.DataAccessor;
 import learning.itstep.javaweb222.data.dto.Product;
 import learning.itstep.javaweb222.data.dto.ProductGroup;
+import learning.itstep.javaweb222.rest.RestMeta;
+import learning.itstep.javaweb222.rest.RestResponse;
+import learning.itstep.javaweb222.rest.RestStatus;
 
 @Singleton
 public class GroupsServlet extends HttpServlet {
     private final DataAccessor dataAccessor;
     private final Gson gson = new GsonBuilder().serializeNulls().create();
-    
+    private  RestResponse restResponse ;
     @Inject
     public GroupsServlet(DataAccessor dataAccessor) {
         this.dataAccessor = dataAccessor;
+    }
+
+    @Override
+    protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        this.restResponse = new  RestResponse();
+        
+        restResponse.setMeta(
+                new RestMeta()
+                .setServiceName("Shop API 'Product groups'")
+                .setCacheSeconds(1000)
+                .setManipulations(new String[] {"GET"})
+                .setLinks(Map.ofEntries(
+                    Map.entry("groups", "/groups"),
+                    Map.entry("group", "/groups/{id}")
+                ) )
+        );
+        String pathInfo = req.getPathInfo(); 
+        if (pathInfo != null && !pathInfo.isEmpty()) {
+          String[] pathParts = pathInfo.substring(1).split("/"); 
+          restResponse.getMeta().setPathParams(pathParts);
+        } else {
+          restResponse.getMeta().setPathParams(new String[0]);
+        }
+        super.service(req, resp); 
+        
+        resp.setContentType("application/json");
+        resp.getWriter().print(
+                gson.toJson(restResponse)
+        );
     }
 
     @Override
@@ -49,24 +82,27 @@ public class GroupsServlet extends HttpServlet {
                   p.setImageUrl(fileUrl+ p.getImageUrl());
               }
             }
+            restResponse.getMeta().setDataType("json.object");
+   
         }
-        
-         resp.setContentType("application/json");
-         
-        resp.getWriter().print(
-                gson.toJson(pg)
-        );
+        else{
+             restResponse.setStatus(RestStatus.status404);
+             restResponse.getMeta().setDataType("null");
+        }
+        this.restResponse.setData(pg);
      }
     private void getAllGroups(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-       List<ProductGroup> groups = dataAccessor.getProductGroups();
+               
+           
+        List<ProductGroup> groups = dataAccessor.getProductGroups();
         String fileUrl = getFileUrl(req);
         for(ProductGroup group : groups) {
             group.setImageUrl( fileUrl + group.getImageUrl() );
         }
-        resp.setContentType("application/json");
-        resp.getWriter().print(
-                gson.toJson(groups)
-        );
+        restResponse.getMeta().setDataType("json.array");
+       
+        restResponse.setData(groups);
+       
     } 
     
     

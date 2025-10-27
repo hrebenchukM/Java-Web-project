@@ -5,6 +5,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 public class Product {
@@ -17,6 +18,21 @@ public class Product {
     private double price;
     private int stock;
     private Date   deletedAt;
+    
+    private ProductGroup group;
+    
+    
+    private List<Product> relativeProducts;
+
+    public List<Product> getRelativeProducts() {
+        return relativeProducts;
+    }
+
+    public void setRelativeProducts(List<Product> relativeProducts) {
+        this.relativeProducts = relativeProducts;
+    }
+    
+    
     
     public static Product fromResultSet(ResultSet rs) throws SQLException {
         Product p = new Product();
@@ -33,7 +49,20 @@ public class Product {
         if(timestamp != null) {
             p.setDeletedAt( new Date( timestamp.getTime() ) );
         }
+        try{
+           p.group = ProductGroup.fromResultSet(rs,false);
+        }
+        catch(SQLException ignore){}
+        
         return p;
+    }
+
+    public ProductGroup getGroup() {
+        return group;
+    }
+
+    public void setGroup(ProductGroup group) {
+        this.group = group;
     }
 
     public UUID getId() {

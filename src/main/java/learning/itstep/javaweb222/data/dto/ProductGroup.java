@@ -22,9 +22,11 @@ public class ProductGroup {
     public List<Product> getProducts() {
         return products;
     }
-    
-    
     public static ProductGroup fromResultSet(ResultSet rs) throws SQLException {
+       return fromResultSet(rs,true);
+    }
+    
+    public static ProductGroup fromResultSet(ResultSet rs, boolean includeProducts) throws SQLException {
         ProductGroup pg = new ProductGroup();
         pg.setId( UUID.fromString( rs.getString("pg_id") ) );
         String parentId = rs.getString("pg_parent_id") ;
@@ -40,8 +42,8 @@ public class ProductGroup {
         if(timestamp != null) {
             pg.setDeletedAt( new Date( timestamp.getTime() ) );
         }
-        
-       try {
+        if(includeProducts){
+            try {
             List<Product> products = new ArrayList<>();
             do {
                 products.add( Product.fromResultSet(rs) );
@@ -49,6 +51,8 @@ public class ProductGroup {
             pg.products = products;
         }
         catch(Exception ignore){}
+        }
+      
         return pg;
     }
 

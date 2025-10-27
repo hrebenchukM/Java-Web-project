@@ -63,6 +63,13 @@ public class FileServlet extends HttpServlet {
             resp.getWriter().print("File " + id + " not found. " + ex.getMessage());
         }
     }
-    
+    public static  String getFileUrl(HttpServletRequest req,String fileName){
+        return String.format("%s://%s:%d%s/file/%s", 
+                req.getScheme(),
+                req.getServerName(),
+                req.getServerPort(),
+                req.getContextPath(),
+                fileName);
+    }
     
 }

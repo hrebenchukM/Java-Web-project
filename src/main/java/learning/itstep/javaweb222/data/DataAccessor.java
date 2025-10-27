@@ -38,6 +38,55 @@ public class DataAccessor {
         this.kdfService = kdfService;
     }
     
+    
+    
+   public List<Product> getRelativeProducts(Product product) {
+    List<Product> result = new ArrayList<>();
+    if(product == null) return result;
+
+     String sql = "SELECT * FROM products p "
+               + "WHERE p.product_deleted_at IS NULL "
+               + "AND p.product_id <> ? "
+               + "AND p.product_group_id = ? "
+               + "ORDER BY RAND() "
+               + "LIMIT 3";
+
+    try(PreparedStatement prep = getConnection().prepareStatement(sql)) {
+        prep.setString(1, product.getId().toString());
+        prep.setString(2, product.getGroupId().toString());
+        ResultSet rs = prep.executeQuery();
+        while(rs.next()) {
+            result.add(Product.fromResultSet(rs));
+        }
+    } catch(SQLException ex) {
+        logger.log(Level.WARNING, "DataAccessor::getRelativeProducts " 
+                + ex.getMessage() + " | " + sql);
+    }
+    return result;
+}
+
+
+    
+    public Product getProductBySlugOrId(String slug){
+         String sql = "SELECT * FROM products p "
+                + "JOIN product_groups pg ON p.product_group_id = pg.pg_id "
+                + "WHERE p.product_slug = ? OR p.product_id = ?";
+        try( PreparedStatement prep = getConnection().prepareStatement(sql)) {
+            prep.setString(1, slug);
+            prep.setString(2, slug);
+            ResultSet rs = prep.executeQuery();
+            if(rs.next()) {
+                return Product.fromResultSet( rs );
+            }
+            else return null;
+        }
+        catch(SQLException ex) {
+            logger.log(Level.WARNING, "DataAccessor::getProductBySlugOrId {0} " 
+                    + ex.getMessage() + " | " + sql);
+            return null;
+        }    
+        
+    }
     public ProductGroup getProductGroupBySlug(String slug) {
         String sql = "SELECT * FROM product_groups pg "
                 + "LEFT JOIN products p ON p.product_group_id = pg.pg_id "

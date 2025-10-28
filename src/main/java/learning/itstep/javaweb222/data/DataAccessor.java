@@ -17,6 +17,7 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import learning.itstep.javaweb222.data.dto.AccessToken;
+import learning.itstep.javaweb222.data.dto.Cart;
 import learning.itstep.javaweb222.data.dto.Product;
 import learning.itstep.javaweb222.data.dto.ProductGroup;
 import learning.itstep.javaweb222.data.dto.UserAccess;
@@ -38,7 +39,53 @@ public class DataAccessor {
         this.kdfService = kdfService;
     }
     
+    public void addToCart(String productId,String userId) throws Exception {
+      try{
+          UUID.fromString(productId);
+      }
+      catch(Exception ignore){
+         throw new Exception("Invalid product id format.UUID expected");
+      }
+      
+      try{
+          UUID.fromString(userId);
+      }
+      catch(Exception ignore){
+         throw new Exception("Invalid user id format.UUID expected");
+      }
+      Cart activeCart = this.getActiveCart(userId);
+      if(activeCart==null){
+          activeCart=this.createCart(userId);
+      }
+      throw new Exception("OK"+productId);
+    }
     
+    
+    
+    public Cart createCart(String userId){
+       return null;
+    }
+    
+    
+    
+    public Cart getActiveCart(String userId) {
+        String sql = "SELECT * FROM carts c "
+                + "JOIN cart_items ci ON ci.ci_cart_id = c.cart_id "
+                + "WHERE c.cart_user_id = ? AND c.paid_at IS NULL AND c.deleted_at IS NULL";
+        try( PreparedStatement prep = getConnection().prepareStatement(sql)) {
+            prep.setString(1, userId);
+            ResultSet rs = prep.executeQuery();
+            if(rs.next()) {
+                return Cart.fromResultSet( rs );
+            }
+            else return null;
+        }
+        catch(SQLException ex) {
+            logger.log(Level.WARNING, "DataAccessor::getActiveCart {0} ",
+                    ex.getMessage() + " | " + sql);
+            return null;
+        }    
+    }
     
    public List<Product> getRelativeProducts(Product product) {
     List<Product> result = new ArrayList<>();
@@ -396,6 +443,55 @@ public class DataAccessor {
         }
         
         
+        
+        
+        
+        
+            // ------------------ Added 2025-10-28 ----------------
+        sql ="CREATE TABLE  IF NOT EXISTS  cart_items("
+                + "ci_id         CHAR(36)      PRIMARY KEY,"
+                + "ci_cart_id    CHAR(36)      NOT NULL,"
+                + "ci_product_id    CHAR(36)      NOT NULL,"
+                + "ci_di_id      CHAR(36)          NULL  COMMENT 'ref to discount_items table',"
+                + "ci_quantity   INT           NOT NULL  DEFAULT 1,"
+                + "ci_price      DECIMAL(14,2) NOT NULL,"
+                + "ci_deleted_at DATETIME          NULL"
+                + ")ENGINE = INNODB, "
+                + " DEFAULT CHARSET = utf8mb4, "
+                + " COLLATE utf8mb4_unicode_ci";
+        try(Statement statement = this.getConnection().createStatement()) {
+            statement.executeUpdate(sql);
+        }
+        catch(SQLException ex) {
+            logger.log(Level.WARNING, "DataAccessor::install {0} " ,
+                    ex.getMessage() + " | " + sql);
+            return false;
+        }
+        
+        
+             // ------------------ Added 2025-10-28 ----------------
+        sql ="CREATE TABLE  IF NOT EXISTS  carts("
+                + "cart_id         CHAR(36)      PRIMARY KEY,"
+                + "cart_user_id    CHAR(36)      NOT NULL,"
+                + "cart_di_id      CHAR(36)          NULL  COMMENT 'ref to discount_items table',"
+                + "cart_price      DECIMAL(15,2) NOT NULL,"
+                + "cart_created_at DATETIME      NOT NULL  DEFAULT CURRENT_TIMESTAMP,"
+                + "cart_paid_at    DATETIME          NULL,"
+                + "cart_deleted_at DATETIME          NULL"
+                + ")ENGINE = INNODB, "
+                + " DEFAULT CHARSET = utf8mb4, "
+                + " COLLATE utf8mb4_unicode_ci";
+        
+        try(Statement statement = this.getConnection().createStatement()) {
+            statement.executeUpdate(sql);
+        }
+        catch(SQLException ex) {
+            logger.log(Level.WARNING, "DataAccessor::install {0} " ,
+                    ex.getMessage() + " | " + sql);
+            return false;
+        }
+        
+        
         return true;
     }
     
@@ -495,6 +591,8 @@ public class DataAccessor {
     public void adminAddProductGroup() {
         
     }
+
+
 }
 /*
 Д.З. Реалізувати ініціалізацію даних (БД) у власному курсовому проєкті

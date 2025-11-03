@@ -3,7 +3,9 @@ package learning.itstep.javaweb222.data.dto;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 
@@ -16,6 +18,18 @@ public class Cart {
     private Date paidAt;
     private Date deletedAt;
 
+    private List<CartItem> cartItems;
+
+    public List<CartItem> getCartItems() {
+        return cartItems;
+    }
+
+    public void setCartItems(List<CartItem> cartItems) {
+        this.cartItems = cartItems;
+    }
+    
+    
+    
     
     public static Cart fromResultSet(ResultSet rs) throws SQLException {
         Cart item = new Cart();
@@ -37,6 +51,15 @@ public class Cart {
         if(timestamp != null) {
             item.setDeletedAt( new Date( timestamp.getTime() ) );
         }
+        
+        item.cartItems = new ArrayList<>();
+        try {
+            do {
+                item.cartItems.add( CartItem.fromResultSet(rs) );
+            } while(rs.next());
+        }
+        catch(Exception ignore) { }
+        
         return item;
     }
     

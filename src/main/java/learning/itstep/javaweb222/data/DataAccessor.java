@@ -18,6 +18,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import learning.itstep.javaweb222.data.dto.AccessToken;
 import learning.itstep.javaweb222.data.dto.Cart;
+import learning.itstep.javaweb222.data.dto.CartItem;
 import learning.itstep.javaweb222.data.dto.Product;
 import learning.itstep.javaweb222.data.dto.ProductGroup;
 import learning.itstep.javaweb222.data.dto.UserAccess;
@@ -40,8 +41,9 @@ public class DataAccessor {
     }
     
     public void addToCart(String productId,String userId) throws Exception {
+      UUID productGuid;
       try{
-          UUID.fromString(productId);
+         productGuid=UUID.fromString(productId);
       }
       catch(Exception ignore){
          throw new Exception("Invalid product id format.UUID expected");
@@ -57,21 +59,160 @@ public class DataAccessor {
       if(activeCart==null){
           activeCart=this.createCart(userId);
       }
-      throw new Exception("OK"+productId);
+      CartItem cartItem = activeCart
+        .getCartItems()
+        .stream()
+        .filter(ci -> ci.getProductId().equals(productGuid))
+        .findFirst()
+        .orElse(null);
+
+      
+      if (cartItem == null) {
+        this.createCartItem(activeCart, productGuid);
+      }
+      else {
+        this.incCartItem(cartItem);
+      }
+      this.updateDiscount(activeCart);
+
+      
     }
     
     
+   private void updateDiscount(Cart cart) throws SQLException, Exception {
+        /*
+        Проходимо по всіх позиціях у кошику, додаємо відомості про базові
+        ціни товарів, а також акції, що діють на них.
+        Аналізуємо, чи є товар в акції, якщо ні, то додаємо повну ціну,
+        якщо є - враховуємо акцію (або відсоток, або інші алгоритми)
+        */
+        // етап І. розраховуємо ціни зі знижками, зберігаємо їх в об'єкті (cart)
+        String sql = "SELECT * FROM cart_items ci "
+                + "JOIN products p ON ci.ci_product_id = p.product_id "
+                + "WHERE ci.ci_cart_id = ?" ;
+        try( PreparedStatement prep = getConnection().prepareStatement(sql)) {
+            prep.setString(1, cart.getId().toString());
+            logger.log(Level.INFO, "DataAccessor::updateDiscount {0} ", sql);
+            ResultSet rs = prep.executeQuery();
+            cart.getCartItems().clear();
+            cart.setPrice(0.0);
+            while(rs.next()) {
+                CartItem cartItem = CartItem.fromResultSet(rs);
+                Product product = Product.fromResultSet(rs);
+                if(cartItem.getDiscountItemId() == null) {
+                    // без акцій - звичайний розрахунок ціни
+                    cartItem.setPrice( product.getPrice() * cartItem.getQuantity() );
+                }
+                else {
+                    // врахування акції
+                    cartItem.setPrice( product.getPrice() * cartItem.getQuantity()
+                        * 0.9 /* -10% */
+                    );
+                }
+                cart.getCartItems().add(cartItem);
+                cart.setPrice( cart.getPrice() + cartItem.getPrice() );
+            }
+            if(cart.getDiscountId() != null) {   // акції на покупку (не на товар)
+                cart.setPrice( cart.getPrice() * 0.9 ) ;
+            }
+        }
+        catch(SQLException ex) {
+            logger.log(Level.WARNING, "DataAccessor::updateDiscount {0} ",
+                    ex.getMessage() + " | " + sql);
+            throw ex;
+        }
+        
+        // етап ІІ. переносимо розраховані дані до БД
+        sql = "UPDATE cart_items SET ci_price = ? WHERE ci_id = ?";
+        try( PreparedStatement prep = getConnection().prepareStatement(sql)) {
+            for(CartItem ci : cart.getCartItems()) {
+                prep.setDouble(1, ci.getPrice());                
+                prep.setString(2, ci.getId().toString());
+                prep.executeUpdate();
+            } 
+        }
+        catch(SQLException ex) {
+            logger.log(Level.WARNING, "DataAccessor::updateDiscount {0} ",
+                    ex.getMessage() + " | " + sql);
+            throw ex;
+        }
+        sql = "UPDATE carts SET cart_price = ? WHERE cart_id = ?";
+        try( PreparedStatement prep = getConnection().prepareStatement(sql)) {            
+            prep.setDouble(1, cart.getPrice());                
+            prep.setString(2, cart.getId().toString());
+            prep.executeUpdate();
+        }
+        catch(SQLException ex) {
+            logger.log(Level.WARNING, "DataAccessor::updateDiscount {0} ",
+                    ex.getMessage() + " | " + sql);
+            throw ex;
+        }
+        
+    }
+
+
+    
+    private void incCartItem(CartItem cartItem) throws SQLException {
+        String sql = "UPDATE cart_items SET ci_quantity = ci_quantity + 1 WHERE ci_id = ?";
+
+        try (PreparedStatement prep = getConnection().prepareStatement(sql)) {
+             prep.setString(1, cartItem.getId().toString());
+               logger.log(Level.INFO, "DataAccessor::incCartItem {0} ", sql);
+             prep.executeUpdate();
+        }
+        catch (SQLException ex) {
+               logger.log(Level.WARNING, "DataAccessor::incCartItem {0} ",
+                ex.getMessage() + " | " + sql);
+        throw ex;
+        }
+    }
+
+    
+    private void createCartItem(Cart activeCart, UUID productGuid) throws SQLException {
+        String sql = "INSERT INTO cart_items(ci_id, ci_cart_id, ci_product_id, ci_price) "
+               + "VALUES(UUID(), ?, ?, -1)";
+
+        try (PreparedStatement prep = getConnection().prepareStatement(sql)) {
+             prep.setString(1, activeCart.getId().toString());
+             prep.setString(2, productGuid.toString());
+             prep.executeUpdate();
+        }
+        catch (SQLException ex) {
+               logger.log(Level.WARNING, "DataAccessor::createCartItem {0} ",
+                ex.getMessage() + " | " + sql);
+        throw ex;
+        }
+    }
+
+    
     
     public Cart createCart(String userId){
-       return null;
+         Cart cart = new Cart();
+         cart.setId( this.getDbIdentity() );
+         cart.setUserId( UUID.fromString(userId) );
+         cart.setCartItems(new ArrayList<>());
+         cart.setCreatedAt(new Date());
+
+       String sql = "INSERT INTO carts(cart_id, cart_user_id,cart_price) VALUES(?, ?, -1)";
+       try( PreparedStatement prep = getConnection().prepareStatement(sql)) {
+            prep.setString(1, cart.getId().toString());
+            prep.setString(2, userId);
+            prep.executeUpdate();
+            return cart;
+        }
+        catch(SQLException ex) {
+            logger.log(Level.WARNING, "DataAccessor::createCart {0} ",
+                    ex.getMessage() + " | " + sql);
+            return null;
+        }    
     }
     
     
     
     public Cart getActiveCart(String userId) {
         String sql = "SELECT * FROM carts c "
-                + "JOIN cart_items ci ON ci.ci_cart_id = c.cart_id "
-                + "WHERE c.cart_user_id = ? AND c.paid_at IS NULL AND c.deleted_at IS NULL";
+                + "LEFT JOIN cart_items ci ON ci.ci_cart_id = c.cart_id "
+                + "WHERE c.cart_user_id = ? AND c.cart_paid_at IS NULL AND c.cart_deleted_at IS NULL";
         try( PreparedStatement prep = getConnection().prepareStatement(sql)) {
             prep.setString(1, userId);
             ResultSet rs = prep.executeQuery();

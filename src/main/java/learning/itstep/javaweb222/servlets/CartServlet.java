@@ -43,20 +43,16 @@ public class CartServlet extends HttpServlet{
         );
         
          jwtToken = (JwtToken) req.getAttribute("JWT");
-         if(jwtToken ==null){
-           this.restResponse.setStatus(RestStatus.status401);
-          
-         }
-         else{
-           super.service(req, resp);
-         }
-//        String pathInfo = req.getPathInfo(); 
-//        if (pathInfo != null && !pathInfo.isEmpty()) {
-//          String[] pathParts = pathInfo.substring(1).split("/"); 
-//          restResponse.getMeta().setPathParams(pathParts);
-//        } else {
-//          restResponse.getMeta().setPathParams(new String[0]);
-//        }
+            if (jwtToken == null) {
+             this.restResponse.setStatus(RestStatus.status401);
+             resp.setContentType("application/json");
+             resp.getWriter().print(gson.toJson(restResponse));
+             return;
+           }
+//         else{
+//           super.service(req, resp);
+//         }
+
         super.service(req, resp); 
         
         resp.setContentType("application/json");
@@ -65,6 +61,24 @@ public class CartServlet extends HttpServlet{
         );
     }
 
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        try {
+            this.restResponse.setData(
+            dataAccessor.getActiveCart(
+                    jwtToken.getPayload().getSub()));
+            this.restResponse.getMeta().setDataType("object");
+        }
+        catch(Exception ex) {
+            this.restResponse.getMeta().setDataType("string");
+            this.restResponse.setStatus(RestStatus.status400);
+            this.restResponse.setData(ex.getMessage());
+        }
+    }
+
+    
+    
+    
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
        String productId = req.getParameter("product-id");

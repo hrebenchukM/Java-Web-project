@@ -2,6 +2,7 @@ package learning.itstep.javaweb222.data;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import jakarta.ws.rs.NotFoundException;
 import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.DriverManager;
@@ -13,6 +14,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -79,7 +81,11 @@ public class DataAccessor {
     }
     
     
-   private void updateDiscount(Cart cart) throws SQLException, Exception {
+    private void updateDiscount(Cart cart) throws SQLException, Exception {
+    this.updateDiscount(cart.getId().toString());
+    }
+
+   private void updateDiscount(String cartId) throws SQLException, Exception {
         /*
         Проходимо по всіх позиціях у кошику, додаємо відомості про базові
         ціни товарів, а також акції, що діють на них.
@@ -87,15 +93,15 @@ public class DataAccessor {
         якщо є - враховуємо акцію (або відсоток, або інші алгоритми)
         */
         // етап І. розраховуємо ціни зі знижками, зберігаємо їх в об'єкті (cart)
+        Cart cart = new Cart();
         String sql = "SELECT * FROM cart_items ci "
                 + "JOIN products p ON ci.ci_product_id = p.product_id "
                 + "WHERE ci.ci_cart_id = ?" ;
         try( PreparedStatement prep = getConnection().prepareStatement(sql)) {
-            prep.setString(1, cart.getId().toString());
+            prep.setString(1, cartId);
             logger.log(Level.INFO, "DataAccessor::updateDiscount {0} ", sql);
             ResultSet rs = prep.executeQuery();
-            cart.getCartItems().clear();
-            cart.setPrice(0.0);
+           
             while(rs.next()) {
                 CartItem cartItem = CartItem.fromResultSet(rs);
                 Product product = Product.fromResultSet(rs);
@@ -139,7 +145,7 @@ public class DataAccessor {
         sql = "UPDATE carts SET cart_price = ? WHERE cart_id = ?";
         try( PreparedStatement prep = getConnection().prepareStatement(sql)) {            
             prep.setDouble(1, cart.getPrice());                
-            prep.setString(2, cart.getId().toString());
+            prep.setString(2, cartId);
             prep.executeUpdate();
         }
         catch(SQLException ex) {
@@ -212,6 +218,7 @@ public class DataAccessor {
     public Cart getActiveCart(String userId) {
         String sql = "SELECT * FROM carts c "
                 + "LEFT JOIN cart_items ci ON ci.ci_cart_id = c.cart_id "
+                + "LEFT JOIN products p ON ci.ci_product_id = p.product_id "
                 + "WHERE c.cart_user_id = ? AND c.cart_paid_at IS NULL AND c.cart_deleted_at IS NULL";
         try( PreparedStatement prep = getConnection().prepareStatement(sql)) {
             prep.setString(1, userId);
@@ -246,14 +253,66 @@ public class DataAccessor {
         while(rs.next()) {
             result.add(Product.fromResultSet(rs));
         }
-    } catch(SQLException ex) {
+    } catch(Exception ex) {
         logger.log(Level.WARNING, "DataAccessor::getRelativeProducts " 
                 + ex.getMessage() + " | " + sql);
     }
     return result;
 }
 
-
+   
+    public void modifyCartItem(String cartItemId, int increment) throws Exception {
+        //String sql = "SELECT * FROM cart_items ci WHERE ci_id = ?";
+        String sql = "SELECT * FROM cart_items ci JOIN products p ON ci.ci_product_id = p.product_id WHERE ci_id = ?";
+    
+        CartItem cartItem = null;
+        int productStock = 0;   
+        
+        try( PreparedStatement prep = getConnection().prepareStatement(sql)) {
+            prep.setString(1, cartItemId);
+            ResultSet rs = prep.executeQuery();
+            if(rs.next()) {
+                cartItem = CartItem.fromResultSet( rs );
+                productStock = rs.getInt("product_stock");
+            }
+        }
+        catch(SQLException ex) {
+            logger.log(Level.WARNING, "DataAccessor::modifyCartItem {0} ",
+                    ex.getMessage() + " | " + sql);
+            throw ex;
+        }  
+        if(cartItem==null){
+            throw new Exception("No cart item with id given");
+        }
+        int newQuantity = cartItem.getQuantity()+increment;
+        if(newQuantity<0){
+           throw new Exception("Resulted quantity could not in negative");
+        }
+        if(newQuantity > productStock){
+           throw new Exception("Not enough stock available");
+        }
+        if(newQuantity==0){
+        //delete
+        }
+        else{
+          sql = String.format(
+                 Locale.ROOT,
+                "UPDATE cart_items SET ci_quantity = %d WHERE ci_id = '%s'",
+                 newQuantity,
+                 cartItemId
+                );
+          
+          try( Statement statement = getConnection().createStatement()) {
+                statement.executeUpdate(sql);
+            }
+            catch(SQLException ex) {
+                logger.log(Level.WARNING, "DataAccessor::modifyCartItem {0} ",
+                        ex.getMessage() + " | " + sql);
+                throw ex;
+            }
+          this.updateDiscount(cartItem.getCartId().toString());
+        }
+    }
     
     public Product getProductBySlugOrId(String slug){
          String sql = "SELECT * FROM products p "
@@ -268,7 +327,7 @@ public class DataAccessor {
             }
             else return null;
         }
-        catch(SQLException ex) {
+        catch(Exception ex) {
             logger.log(Level.WARNING, "DataAccessor::getProductBySlugOrId {0} " 
                     + ex.getMessage() + " | " + sql);
             return null;

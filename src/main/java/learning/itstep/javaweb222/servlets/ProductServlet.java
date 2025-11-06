@@ -74,10 +74,11 @@ public class ProductServlet extends HttpServlet{
             this.restResponse.getMeta().setDataType("string");
            }
            else{
-            String imgUrl = product.getImageUrl();
-            if(imgUrl!=null){
-                  product.setImageUrl(FileServlet.getFileUrl(req, imgUrl));
-            }
+//            String imgUrl = product.getImageUrl();
+//            if(imgUrl!=null){
+//                  product.setImageUrl(FileServlet.getFileUrl(req, imgUrl));
+//            } 
+            product.correctImageUrl(req);
             ProductGroup grp = product.getGroup();
             if(grp!=null){
                 grp.setImageUrl(FileServlet.getFileUrl(req, grp.getImageUrl()));

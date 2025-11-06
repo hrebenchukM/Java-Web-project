@@ -17,6 +17,15 @@ public class CartItem {
     private double price;
     private Date deletedAt;
 
+    private Product product;
+
+    public Product getProduct() {
+        return product;
+    }
+
+    public void setProduct(Product product) {
+        this.product = product;
+    }
     
     
     public static CartItem fromResultSet(ResultSet rs) throws SQLException {
@@ -38,6 +47,9 @@ public class CartItem {
         if (timestamp != null) {
             item.setDeletedAt(new Date(timestamp.getTime()));
         }
+        
+        try{ item.setProduct(Product.fromResultSet(rs));}
+        catch(Exception ignore){}
 
         return item;
     }

@@ -1,12 +1,14 @@
 
 package learning.itstep.javaweb222.data.dto;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import learning.itstep.javaweb222.servlets.FileServlet;
 
 public class Product {
      private UUID   id;
@@ -34,7 +36,7 @@ public class Product {
     
     
     
-    public static Product fromResultSet(ResultSet rs) throws SQLException {
+    public static Product fromResultSet(ResultSet rs) throws Exception {
         Product p = new Product();
         p.setId( UUID.fromString( rs.getString("product_id") ) );
         p.setGroupId( UUID.fromString( rs.getString("product_group_id"))) ;
@@ -55,6 +57,13 @@ public class Product {
         catch(SQLException ignore){}
         
         return p;
+    }
+    
+    
+    public void correctImageUrl(HttpServletRequest req) {
+        if(imageUrl != null) {
+            imageUrl = FileServlet.getFileUrl(req, imageUrl);
+        }
     }
 
     public ProductGroup getGroup() {

@@ -105,24 +105,22 @@ public class CartServlet extends HttpServlet{
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-       
         try {
-            Cart activeCart =  dataAccessor.getActiveCart(
+            Cart activeCart = dataAccessor.getActiveCart(
                     jwtToken.getPayload().getSub());
-            if(activeCart !=null){
-                for(CartItem ci:activeCart.getCartItems()){
+            if(activeCart != null) {
+                for(CartItem ci : activeCart.getCartItems()) {
                     Product p = ci.getProduct();
-                    if(p!=null){
-                       p.correctImageUrl(req);
+                    if(p != null) {
+                        p.correctImageUrl(req);
                     }
                 }
                 this.restResponse.getMeta().setDataType("object");
             }
-            else{
-                 this.restResponse.getMeta().setDataType("null");
+            else {
+                this.restResponse.getMeta().setDataType("null");
             }
             this.restResponse.setData(activeCart);
-           
         }
         catch(Exception ex) {
             this.restResponse.getMeta().setDataType("string");
@@ -131,30 +129,59 @@ public class CartServlet extends HttpServlet{
         }
     }
 
-    
-    
-    
+
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-       String productId = req.getParameter("product-id");
-       this.restResponse.getMeta().setDataType("string");
-       
-       if(productId == null||productId.isBlank()){
+        String productId = req.getParameter("product-id");
+        this.restResponse.getMeta().setDataType("string");
+        if(productId == null || productId.isBlank()) {
             this.restResponse.setStatus(RestStatus.status400);
-            this.restResponse.setData("Missing query parametr:product-id");    
-        } 
-        try{
-          
-          dataAccessor.addToCart(productId,jwtToken.getPayload().getSub());
-          this.restResponse.setData("Add OK");
+            this.restResponse.setData("Missing query parameter: product-id");
+            return;
         }
-        catch(Exception ex){
+        try {
+            dataAccessor.addToCart(productId, jwtToken.getPayload().getSub());          
+            this.restResponse.setData("Add OK");
+        }
+        catch(Exception ex) {
             this.restResponse.setStatus(RestStatus.status400);
             this.restResponse.setData(ex.getMessage());
         }
-       
     }
 
+    @Override
+    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        String cartItemId = req.getParameter("cart-item-id");
+        if(cartItemId == null || cartItemId.isBlank()) {
+            this.restResponse.setStatus(RestStatus.status400);
+            this.restResponse.setData("Missing query parameter: cart-item-id");
+            return;
+        }
+        
+        try {
+            dataAccessor.deleteCartItem(cartItemId);
+            this.restResponse.getMeta().setDataType("null");
+        }
+        catch(Exception ex) {
+            this.restResponse.getMeta().setDataType("string");
+            this.restResponse.setStatus(RestStatus.status400);
+            this.restResponse.setData(ex.getMessage());
+        }        
+    }
+
+    @Override
+    protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        // Checkout cart - імітація здійснення покупки
+        try {
+            dataAccessor.checkoutActiveCart(jwtToken.getPayload().getSub());          
+            this.restResponse.getMeta().setDataType("null");
+        }
+        catch(Exception ex) {
+            this.restResponse.setStatus(RestStatus.status400);
+            this.restResponse.setData(ex.getMessage());
+        }
+    }
+    
     
     
     

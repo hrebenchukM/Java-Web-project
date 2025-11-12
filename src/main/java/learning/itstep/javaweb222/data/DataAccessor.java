@@ -42,6 +42,11 @@ public class DataAccessor {
         this.kdfService = kdfService;
     }
     
+    
+    public UserAccess getUserData(String userId,String roleId) {
+     return null;
+    }
+     
     public void addToCart(String productId,String userId) throws Exception {
       UUID productGuid;
       try{
@@ -260,7 +265,7 @@ public class DataAccessor {
     }
     return result;
 }
-    public void deleteCartItem(String cartItemId) throws Exception {
+   public void deleteCartItem(String cartItemId) throws Exception {
         String sql = "SELECT * FROM cart_items ci WHERE ci_id = ?";
         CartItem cartItem = null;
         try( PreparedStatement prep = getConnection().prepareStatement(sql)) {
@@ -453,7 +458,7 @@ public class DataAccessor {
         }
     }
     
-    public void checkoutActiveCart(String userId) throws Exception {
+      public void checkoutActiveCart(String userId) throws Exception {
         Cart activeCart = this.getActiveCart(userId);
         if(activeCart == null) {
             throw new Exception("User has no active cart");
@@ -843,6 +848,8 @@ public class DataAccessor {
     public void adminAddProductGroup() {
         
     }
+
+  
 
    
 

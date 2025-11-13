@@ -43,11 +43,14 @@ public class JwtToken {
         payload.setSub(at.getUserAccess().getUserId().toString());
         Date dob = at.getUserAccess().getUser().getBirthdate();
         if( dob != null ) {
-            payload.setDob( dob.toString() );
+            //payload.setDob( dob.toString() );
+            java.text.SimpleDateFormat fmt = new java.text.SimpleDateFormat("yyyy-MM-dd");
+            payload.setDob(fmt.format(dob));
         }
         payload.setName(at.getUserAccess().getUser().getName());
         payload.setEmail(at.getUserAccess().getUser().getEmail());
         jwt.setPayload(payload);
+       
         return jwt;
     }
     

@@ -16,6 +16,7 @@ import learning.itstep.javaweb222.data.DataAccessor;
 import learning.itstep.javaweb222.data.dto.AccessToken;
 import learning.itstep.javaweb222.data.dto.UserAccess;
 import learning.itstep.javaweb222.data.jwt.JwtToken;
+import learning.itstep.javaweb222.models.user.UserProfileModel;
 import learning.itstep.javaweb222.rest.RestMeta;
 import learning.itstep.javaweb222.rest.RestResponse;
 import learning.itstep.javaweb222.rest.RestStatus;
@@ -81,12 +82,26 @@ public class UserServlet extends HttpServlet {
             this.restResponse.setStatus(RestStatus.status401);
             return;
         }
+        String userId = jwtToken.getPayload().getSub();
         try {
-        this.restResponse.setData(
-              dataAccessor.getUserData(
-                      jwtToken.getPayload().getSub(),
-                      jwtToken.getPayload().getAud()
-              )
+            UserAccess userAccess = dataAccessor.getUserAccess(
+                    jwtToken.getPayload().getSub(),
+                    jwtToken.getPayload().getAud()
+            );
+               
+            if( userAccess == null || userAccess.getUser()== null ) {
+            this.restResponse.getMeta().setDataType("string");
+            this.restResponse.setStatus(RestStatus.status404);
+            this.restResponse.setData("User not found");
+            return;
+            }
+
+            this.restResponse.setData(
+                    new UserProfileModel()
+                    .setLogin(userAccess.getLogin())
+                    .setRole(userAccess.getUserRole())
+                    .setUser(userAccess.getUser())
+                    .setCarts(dataAccessor.getUserCarts(userId))
             );
             this.restResponse.getMeta().setDataType("object");
         }
@@ -94,7 +109,7 @@ public class UserServlet extends HttpServlet {
             this.restResponse.getMeta().setDataType("string");
             this.restResponse.setStatus(RestStatus.status400);
             this.restResponse.setData(ex.getMessage());
-        }
+        }   
     }
     
     private void authenticate(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {

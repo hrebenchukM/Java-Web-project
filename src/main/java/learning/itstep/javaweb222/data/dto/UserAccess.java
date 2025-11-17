@@ -11,6 +11,7 @@ public class UserAccess {
     private String login;
     private String salt;
     private String dk;
+    private UserRole userRole;
     
     private User user;
     
@@ -26,9 +27,21 @@ public class UserAccess {
         try { ua.setUser( User.fromResultSet(rs) ); }
         catch(SQLException ignore){}
         
+        try { ua.setUserRole(UserRole.fromResultSet(rs) ); }
+        catch(SQLException ignore){}
+        
         return ua;
     }
 
+    public UserRole getUserRole() {
+        return userRole;
+    }
+
+    public void setUserRole(UserRole userRole) {
+        this.userRole = userRole;
+    }
+
+    
     public User getUser() {
         return user;
     }

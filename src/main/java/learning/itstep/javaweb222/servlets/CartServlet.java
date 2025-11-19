@@ -80,7 +80,13 @@ public class CartServlet extends HttpServlet{
                 .setCacheSeconds(1000)
                 .setManipulations(new String[] {"GET","POST"})
                 .setLinks(Map.ofEntries(
-                    Map.entry("add-to-cart", "POST /cart?product-id={product-id}")
+                 Map.entry("add-to-cart", "POST /cart?product-id={id}"),
+                    Map.entry("modify-cart", "PATCH /cart?cart-item-id={id}&inc={n}"),
+                    Map.entry("repeat-cart", "LINK /cart/{old-cart-id}"),
+                    Map.entry("active-cart", "GET /cart"),
+                    Map.entry("history-cart", "GET /cart/{old-cart-id}"),
+                    Map.entry("checkout-cart", "PUT /cart"),
+                    Map.entry("remove-cart-item", "DELETE /cart?cart-item-id={id}")
                 ) )
         );
         
@@ -91,11 +97,14 @@ public class CartServlet extends HttpServlet{
              resp.getWriter().print(gson.toJson(restResponse));
              return;
            }
-//         else{
-//           super.service(req, resp);
-//         }
+        else {
+            if(req.getMethod().equals("LINK")) {
+                this.doLink(req, resp);
+            }
+            else super.service(req, resp);
+        }
 
-        super.service(req, resp); 
+
         
         resp.setContentType("application/json");
         resp.getWriter().print(
@@ -103,9 +112,74 @@ public class CartServlet extends HttpServlet{
         );
     }
 
+    private void doLink(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        String cartId = req.getPathInfo();
+        if(cartId == null || cartId.isBlank() || "/".equals(cartId)) {
+             this.restResponse.setStatus(RestStatus.status400);
+             this.restResponse.setData("Missing path parameter: cart-id");
+             return;
+        }
+
+        // прибираємо перший "/"
+        cartId = cartId.substring(1);
+        String userId = jwtToken.getPayload().getSub();
+        this.restResponse.getMeta().getParams().put("cartId", cartId);
+        this.restResponse.getMeta().getParams().put("userId", userId);
+    
+        try {
+            dataAccessor.repeatCart(userId, cartId);
+            this.restResponse.getMeta().setDataType("null");
+        }
+        catch(Exception ex) {
+            this.restResponse.getMeta().setDataType("string");
+            this.restResponse.setStatus(RestStatus.status400);
+            this.restResponse.setData(ex.getMessage());
+        }
+
+    }
+    
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        String cartId = req.getPathInfo();
+        if(cartId == null || cartId.isBlank() || "/".equals(cartId)) {
+            this.getActiveCart(req);
+        }
+        else {
+            this.getHistoryCart(req, cartId.substring(1));
+        }
+
+    }
+    private void getHistoryCart(HttpServletRequest req, String cartId) {
+       this.restResponse.getMeta().getParams().put("cartId", cartId);
+       this.restResponse.getMeta().getParams().put("userId", jwtToken.getPayload().getSub());
+    
         try {
+            Cart activeCart = dataAccessor.getHistoryCart(
+                    jwtToken.getPayload().getSub(),
+                    cartId);
+            if(activeCart != null) {
+                for(CartItem ci : activeCart.getCartItems()) {
+                    Product p = ci.getProduct();
+                    if(p != null) {
+                        p.correctImageUrl(req);
+                    }
+                }
+                this.restResponse.getMeta().setDataType("object");
+            }
+            else {
+                this.restResponse.getMeta().setDataType("null");
+            }
+            this.restResponse.setData(activeCart);
+        }
+        catch(Exception ex) {
+            this.restResponse.getMeta().setDataType("string");
+            this.restResponse.setStatus(RestStatus.status400);
+            this.restResponse.setData(ex.getMessage());
+        }
+    }
+
+    private void getActiveCart(HttpServletRequest req) {
+         try {
             Cart activeCart = dataAccessor.getActiveCart(
                     jwtToken.getPayload().getSub());
             if(activeCart != null) {
@@ -128,8 +202,6 @@ public class CartServlet extends HttpServlet{
             this.restResponse.setData(ex.getMessage());
         }
     }
-
-
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String productId = req.getParameter("product-id");

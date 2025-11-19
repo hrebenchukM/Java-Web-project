@@ -45,7 +45,7 @@ public class CorsFilter implements Filter {
         // logger.log(Level.INFO, "CORS filter works");
         if( "OPTIONS".equals( req.getMethod() ) ) {
             resp.setHeader("Access-Control-Allow-Headers", req.getHeader("Access-Control-Request-Headers"));
-            resp.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE");
+            resp.setHeader("Access-Control-Allow-Methods", req.getHeader("Access-Control-Request-Method"));
         }
     }
 

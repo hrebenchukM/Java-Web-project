@@ -43,6 +43,10 @@ public class DataAccessor {
     }
     
     
+    public void repeatCart(String userId, String cartId) {
+    
+    }
+    
     public UserAccess getUserAccess(String userId, String roleId) {
         // перевіряємо чи є UserAccess із зазначеними даними
         String sql = "SELECT * FROM user_accesses ua "
@@ -273,7 +277,29 @@ public class DataAccessor {
         }    
     }
     
-    
+    public Cart getHistoryCart(String userId, String cartId) {
+        String sql = "SELECT * FROM carts c "
+                + "LEFT JOIN cart_items ci ON ci.ci_cart_id = c.cart_id "
+                + "LEFT JOIN products p ON ci.ci_product_id = p.product_id "
+                + "WHERE c.cart_user_id = ? "
+                + " AND c.cart_id = ? "
+                + " AND ci.ci_deleted_at IS NULL";
+         try( PreparedStatement prep = getConnection().prepareStatement(sql)) {
+            prep.setString(1, userId);
+            prep.setString(2, cartId);
+            ResultSet rs = prep.executeQuery();
+            if(rs.next()) {
+                return Cart.fromResultSet( rs );
+            }
+            else return null;
+        }
+        catch(SQLException ex) {
+            logger.log(Level.WARNING, "DataAccessor::getHistoryCart {0} ",
+                    ex.getMessage() + " | " + sql);
+            return null;
+        }    
+    }
+
     
     public Cart getActiveCart(String userId) {
         String sql = "SELECT * FROM carts c "
@@ -904,6 +930,9 @@ public class DataAccessor {
         
     }
 
+   
+
+  
   
 
    

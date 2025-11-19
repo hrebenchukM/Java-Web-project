@@ -1,5 +1,6 @@
 package learning.itstep.javaweb222.rest;
 
+import java.util.HashMap;
 import java.util.Map;
 
 
@@ -10,8 +11,14 @@ public class RestMeta {
     private String dataType;
     private String[] manipulations;
     private Map<String, String> links;
+    private final Map<String, String> params = new HashMap<>();
     private String[] pathParams;
 
+    public Map<String, String> getParams() {
+        return params;
+    }
+
+    
     public String[] getPathParams() {
         return pathParams;
     }

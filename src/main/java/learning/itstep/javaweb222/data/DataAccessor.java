@@ -58,8 +58,33 @@ public class DataAccessor {
         if(activeCart == null) {
             activeCart = createCart(userId);
         }
+        
         // Якщо ні – то створюємо
         for(CartItem baseCartItem : cart.getCartItems()) {
+            
+                // ---------------------- STOCK CONTROL ----------------------
+                Product product = this.getProductBySlugOrId(
+                        baseCartItem.getProductId().toString()
+                );
+                if(product == null) {
+                    throw new Exception("Product not found: " + baseCartItem.getProductId());
+                }
+
+                int stock = product.getStock();
+                int wanted = baseCartItem.getQuantity();
+
+                // якщо хочемо більше ніж є → ставимо максимум
+                if(wanted > stock) {
+                    wanted = stock;
+                }
+
+                // якщо нічого додавати
+                if(wanted <= 0) {
+                    continue;
+                }
+                // -----------------------------------------------------------
+
+            
             CartItem activeCartItem = activeCart        // шукаємо в активному кошику
                     .getCartItems()                     // елементи з тими самими
                     .stream()                           // ProductId
@@ -69,13 +94,30 @@ public class DataAccessor {
                     .orElse(null);
 
             if(activeCartItem == null) {
-                this.createCartItem(activeCart, baseCartItem);
+                CartItem newItem = new CartItem();
+                newItem.setProductId(baseCartItem.getProductId());
+                newItem.setQuantity(wanted);
+                this.createCartItem(activeCart, newItem);
+            //    this.createCartItem(activeCart, baseCartItem);
             }
             else {
-                this.incCartItem(
-                        activeCartItem,
-                        baseCartItem.getQuantity());
+                int newQty = activeCartItem.getQuantity() + wanted;
+                if(newQty > stock) {
+                    newQty = stock;
+                }
+                 this.incCartItem(
+                         activeCartItem,
+                         newQty - activeCartItem.getQuantity());
+//                this.incCartItem(
+//                        activeCartItem,
+//                        baseCartItem.getQuantity());
             }
+            if(baseCartItem.getQuantity() > wanted) {
+               throw new Exception(
+                   "Товар \"" + product.getName()
+                   + "\" додано у максимально можливій кількості (" + stock + ")"
+               );
+           }
         }
         updateDiscount(activeCart);
 

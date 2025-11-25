@@ -23,6 +23,7 @@ import learning.itstep.javaweb222.data.dto.Cart;
 import learning.itstep.javaweb222.data.dto.CartItem;
 import learning.itstep.javaweb222.data.dto.Product;
 import learning.itstep.javaweb222.data.dto.ProductGroup;
+import learning.itstep.javaweb222.data.dto.User;
 import learning.itstep.javaweb222.data.dto.UserAccess;
 import learning.itstep.javaweb222.services.config.ConfigService;
 import learning.itstep.javaweb222.services.kdf.KdfService;
@@ -43,8 +44,58 @@ public class DataAccessor {
     }
     
     
-    public void repeatCart(String userId, String cartId) {
+    public void repeatCart(String userId, String cartId) throws Exception {
+        Cart cart = getCartById(cartId);
+        if(cart == null) {
+            throw new Exception("Cart not found for id: " + cartId);
+        }
+        User user = getUserById(userId);
+        if(user == null) {
+            throw new Exception("User not found for id: " + userId);
+        }
+        Cart activeCart = getActiveCart(userId);
+        // Якщо немає, то створюємо новий
+        if(activeCart == null) {
+            activeCart = createCart(userId);
+        }
+        // Якщо ні – то створюємо
+        for(CartItem baseCartItem : cart.getCartItems()) {
+            CartItem activeCartItem = activeCart        // шукаємо в активному кошику
+                    .getCartItems()                     // елементи з тими самими
+                    .stream()                           // ProductId
+                    .filter((ci) -> ci.getProductId().equals(
+                            baseCartItem.getProductId()))
+                    .findFirst()
+                    .orElse(null);
+
+            if(activeCartItem == null) {
+                this.createCartItem(activeCart, baseCartItem);
+            }
+            else {
+                this.incCartItem(
+                        activeCartItem,
+                        baseCartItem.getQuantity());
+            }
+        }
+        updateDiscount(activeCart);
+
+
+    }
     
+    public User getUserById(String userId) {
+        String sql = "SELECT * FROM users u WHERE u.user_id = ?";
+        try(PreparedStatement prep = this.getConnection().prepareStatement(sql)) {
+            prep.setString(1, userId);
+            ResultSet rs = prep.executeQuery();
+            if(rs.next()) {
+                return User.fromResultSet(rs);                
+            }
+        }
+        catch(SQLException ex) {
+            logger.log(Level.WARNING, "DataAccessor::getUserById {0}", 
+                    ex.getMessage() + " | " + sql);
+        }
+        return null;
     }
     
     public UserAccess getUserAccess(String userId, String roleId) {
@@ -220,11 +271,14 @@ public class DataAccessor {
         
     }
 
-
-    
     private void incCartItem(CartItem cartItem) throws SQLException {
-        String sql = "UPDATE cart_items SET ci_quantity = ci_quantity + 1 WHERE ci_id = ?";
+        incCartItem(cartItem, 1);
+    }
 
+    private void incCartItem(CartItem cartItem,int inc) throws SQLException {
+         String sql = String.format(
+                "UPDATE cart_items SET ci_quantity = ci_quantity + %d WHERE ci_id = ?",
+                inc);
         try (PreparedStatement prep = getConnection().prepareStatement(sql)) {
              prep.setString(1, cartItem.getId().toString());
                logger.log(Level.INFO, "DataAccessor::incCartItem {0} ", sql);
@@ -253,7 +307,22 @@ public class DataAccessor {
         throw ex;
         }
     }
-
+    
+    private void createCartItem(Cart activeCart, CartItem baseCartItem) throws SQLException {
+        String sql = "INSERT INTO cart_items(ci_id, ci_cart_id, ci_product_id, ci_price, ci_quantity) "
+                + "VALUES(UUID(), ?, ?, -1, ?)";
+        try( PreparedStatement prep = getConnection().prepareStatement(sql)) {
+            prep.setString(1, activeCart.getId().toString());
+            prep.setString(2, baseCartItem.getProductId().toString());
+            prep.setInt(3, baseCartItem.getQuantity());
+            prep.executeUpdate();
+        }
+        catch(SQLException ex) {
+            logger.log(Level.WARNING, "DataAccessor::createCartItem {0} ",
+                    ex.getMessage() + " | " + sql);
+            throw ex;
+        }
+    }
     
     
     public Cart createCart(String userId){
@@ -275,6 +344,27 @@ public class DataAccessor {
                     ex.getMessage() + " | " + sql);
             return null;
         }    
+    }
+    
+    public Cart getCartById(String cartId) {
+        String sql = "SELECT * FROM carts c "
+                + "LEFT JOIN cart_items ci ON ci.ci_cart_id = c.cart_id "
+                + "LEFT JOIN products p ON ci.ci_product_id = p.product_id "
+                + "WHERE c.cart_id = ? "
+                + " AND ci.ci_deleted_at IS NULL";
+        try( PreparedStatement prep = getConnection().prepareStatement(sql)) {
+            prep.setString(1, cartId);
+            ResultSet rs = prep.executeQuery();
+            if(rs.next()) {
+                return Cart.fromResultSet( rs );
+            }
+            else return null;
+        }
+        catch(SQLException ex) {
+            logger.log(Level.WARNING, "DataAccessor::getCartById {0} ",
+                    ex.getMessage() + " | " + sql);
+            return null;
+        }   
     }
     
     public Cart getHistoryCart(String userId, String cartId) {
@@ -299,7 +389,8 @@ public class DataAccessor {
             return null;
         }    
     }
-
+    
+    
     
     public Cart getActiveCart(String userId) {
         String sql = "SELECT * FROM carts c "

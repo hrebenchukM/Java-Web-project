@@ -963,6 +963,35 @@ public class DataAccessor {
         }
         
         
+        
+        //////////////////////////////2025-11-26///////////////////
+ 
+        
+        
+        sql = "CREATE TABLE  IF NOT EXISTS  rates ("
+                + "rate_id       CHAR(36)     PRIMARY KEY,"
+                + "user_id       CHAR(36)     NOT NULL,"
+                + "ci_id         CHAR(36)         NULL  COMMENT 'cart item id',"
+                + "item_id       CHAR(36)     NOT NULL COMMENT 'potentially linked to product',"
+                + "rate_stars    TINYINT      NOT NULL COMMENT 'rate in stars from 1 to 5',"
+                + "rate_text     TEXT             NULL,"
+                + "rate_created_at DATETIME   NOT NULL  DEFAULT CURRENT_TIMESTAMP,"
+                + "rate_updated_at DATETIME        NULL,"
+                + "rate_deleted_at DATETIME        NULL"
+                + ")ENGINE = INNODB, "
+                + " DEFAULT CHARSET = utf8mb4, "
+                + " COLLATE utf8mb4_unicode_ci";
+
+        
+        try(Statement statement = this.getConnection().createStatement()) {
+            statement.executeUpdate(sql);
+        }
+        catch(SQLException ex) {
+            logger.log(Level.WARNING, "DataAccessor::install {0} " ,
+                    ex.getMessage() + " | " + sql);
+            return false;
+        }
+        
         return true;
     }
     

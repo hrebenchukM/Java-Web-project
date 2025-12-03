@@ -25,7 +25,7 @@ public class UserAccess {
         ua.setDk( rs.getString("dk") );
         
         try { ua.setUser( User.fromResultSet(rs) ); }
-        catch(SQLException ignore){}
+        catch(Exception ignore){}
         
         try { ua.setUserRole(UserRole.fromResultSet(rs) ); }
         catch(SQLException ignore){}

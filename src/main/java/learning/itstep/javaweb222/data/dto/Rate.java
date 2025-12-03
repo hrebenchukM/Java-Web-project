@@ -17,7 +17,7 @@ public class Rate {
     private Date updatedAt;
     private Date deletedAt;
 
-    
+    private User user;
     
     
     public static Rate fromResultSet(ResultSet rs) throws Exception {
@@ -45,7 +45,20 @@ public class Rate {
         if(timestamp != null) {
             item.setDeletedAt( new Date( timestamp.getTime() ) );
         }
+        try {
+            item.setUser( User.fromResultSet(rs) );
+        }
+        catch(Exception ignore) { }
+
         return item;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
     
     

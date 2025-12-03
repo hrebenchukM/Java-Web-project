@@ -1,45 +1,42 @@
-
 package learning.itstep.javaweb222.data.dto;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import learning.itstep.javaweb222.servlets.FileServlet;
 
+
 public class Product {
-     private UUID   id;
+    private UUID   id;
     private UUID   groupId;
     private String name;
     private String description;
     private String slug;
     private String imageUrl;
     private double price;
-    private int stock;
+    private int    stock;
     private Date   deletedAt;
     
     private ProductGroup group;
+    private Rate rate;
+    private double avgRate;
+    private int ratesCount;
+    private List<Rate> rates;
     
     
-    private List<Product> relativeProducts;
-
-    public List<Product> getRelativeProducts() {
-        return relativeProducts;
-    }
-
-    public void setRelativeProducts(List<Product> relativeProducts) {
-        this.relativeProducts = relativeProducts;
-    }
+     public static Product fromResultSet(ResultSet rs) throws Exception {
+        return fromResultSet(rs,false);
+     }
     
-    
-    
-    public static Product fromResultSet(ResultSet rs) throws Exception {
+    public static Product fromResultSet(ResultSet rs,boolean withRates) throws Exception {
         Product p = new Product();
         p.setId( UUID.fromString( rs.getString("product_id") ) );
-        p.setGroupId( UUID.fromString( rs.getString("product_group_id"))) ;
+        p.setGroupId( UUID.fromString( rs.getString("product_group_id") ) );
         p.setName( rs.getString("product_name") );
         p.setDescription( rs.getString("product_description") );
         p.setSlug( rs.getString("product_slug") );
@@ -51,14 +48,60 @@ public class Product {
         if(timestamp != null) {
             p.setDeletedAt( new Date( timestamp.getTime() ) );
         }
-        try{
-           p.group = ProductGroup.fromResultSet(rs,false);
-        }
-        catch(SQLException ignore){}
+        try {
+            p.group = ProductGroup.fromResultSet(rs, false);
+        }        
+        catch(Exception ignore) { }
         
+      
+
+        if(withRates) {
+            p.rates = new ArrayList<>();
+            do {
+                p.rates.add(Rate.fromResultSet(rs));
+            } while(rs.next());
+        }
+        else{
+            try {
+                p.rate = Rate.fromResultSet(rs);
+            }        
+            catch(Exception ignore) { }
+
+            try {
+                p.avgRate = rs.getDouble("rate_avg");
+                p.ratesCount = rs.getInt("rates_count");
+            }
+            catch(Exception ignore) { }
+        }
         return p;
     }
+
+    public List<Rate> getRates() {
+        return rates;
+    }
+
+    public void setRates(List<Rate> rates) {
+        this.rates = rates;
+    }
     
+
+    public double getAvgRate() {
+        return avgRate;
+    }
+
+    public void setAvgRate(double avgRate) {
+        this.avgRate = avgRate;
+    }
+
+    public int getRatesCount() {
+        return ratesCount;
+    }
+
+    public void setRatesCount(int ratesCount) {
+        this.ratesCount = ratesCount;
+    }
+
+ 
     
     public void correctImageUrl(HttpServletRequest req) {
         if(imageUrl != null) {
@@ -66,12 +109,16 @@ public class Product {
         }
     }
 
-    public ProductGroup getGroup() {
-        return group;
+    public Rate getRate() {
+        return rate;
     }
 
-    public void setGroup(ProductGroup group) {
-        this.group = group;
+    public void setRate(Rate rate) {
+        this.rate = rate;
+    }
+
+    public ProductGroup getGroup() {
+        return group;
     }
 
     public UUID getId() {
@@ -145,9 +192,6 @@ public class Product {
     public void setDeletedAt(Date deletedAt) {
         this.deletedAt = deletedAt;
     }
-
-    
-    
     
     
 }

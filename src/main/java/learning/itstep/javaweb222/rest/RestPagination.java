@@ -6,6 +6,16 @@ public class RestPagination {
     private int lastPage;
     private int perPage;
     private int totalItems;
+    private String firstPageHref;
+
+    public String getFirstPageHref() {
+        return firstPageHref;
+    }
+
+    public RestPagination setFirstPageHref(String firstPageHref) {
+        this.firstPageHref = firstPageHref;
+        return this;
+    }
 
     public int getCurrentPage() {
         return currentPage;

@@ -2,6 +2,8 @@ package learning.itstep.javaweb222.rest;
 
 
 public class RestStatus {
+
+  
    private int code;
    private boolean isOk;
    private String phrase;

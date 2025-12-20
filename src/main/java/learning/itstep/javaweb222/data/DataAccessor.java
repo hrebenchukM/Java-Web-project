@@ -22,9 +22,11 @@ import learning.itstep.javaweb222.data.dto.Cart;
 import learning.itstep.javaweb222.data.dto.CartItem;
 import learning.itstep.javaweb222.data.dto.Product;
 import learning.itstep.javaweb222.data.dto.ProductGroup;
+import learning.itstep.javaweb222.data.dto.Rate;
 import learning.itstep.javaweb222.data.dto.User;
 import learning.itstep.javaweb222.data.dto.UserAccess;
 import learning.itstep.javaweb222.models.rate.RateFormModel;
+import learning.itstep.javaweb222.rest.RestPagination;
 import learning.itstep.javaweb222.services.config.ConfigService;
 import learning.itstep.javaweb222.services.kdf.KdfService;
 
@@ -43,6 +45,33 @@ public class DataAccessor {
         this.kdfService = kdfService;
     }
     
+    
+   public List<Rate> getRates(String id, RestPagination pagination) throws Exception {
+    int skip = (pagination.getCurrentPage() - 1) * pagination.getPerPage();
+  String sql = "SELECT * FROM rates r " +
+        "LEFT JOIN users u ON r.user_id = u.user_id " +
+        "WHERE r.item_id = ? AND r.rate_deleted_at IS NULL " +
+        "ORDER BY r.rate_created_at " +
+        String.format(" LIMIT %d, %d", skip, pagination.getPerPage());
+
+    try( PreparedStatement prep = getConnection().prepareStatement(sql) ) {
+        prep.setString(1, id);
+        ResultSet rs = prep.executeQuery();
+        List<Rate> res = new ArrayList<>();
+        while( rs.next() ) {
+            res.add( Rate.fromResultSet(rs) ) ;
+        }
+        return res;
+    }
+    catch(SQLException ex) {
+        logger.log(Level.WARNING, "DataAccessor::getRatesCountById {0}",
+                ex.getMessage() + " | " + sql);
+        return null;
+    }
+}
+
+    
+
     public void addRate(RateFormModel rateFormModel) throws Exception {
         // Перевіряємо дані на валідні UUID
         UUID.fromString( rateFormModel.getCartItemId() );
@@ -529,7 +558,8 @@ public class DataAccessor {
         + "JOIN product_groups pg ON p.product_group_id = pg.pg_id "
         + "LEFT JOIN rates r ON p.product_id = r.item_id "
         + "LEFT JOIN users u ON r.user_id = u.user_id "
-        + "WHERE r.rate_deleted_at IS NULL AND (p.product_slug = ? OR p.product_id = ?)";
+        + "WHERE r.rate_deleted_at IS NULL AND (p.product_slug = ? OR p.product_id = ?) "
+        + "ORDER BY r.rate_created_at LIMIT 2 ";
 
         try( PreparedStatement prep = getConnection().prepareStatement(sql)) {
             prep.setString(1, slug);
@@ -564,6 +594,23 @@ public class DataAccessor {
         return ret;
     }
     
+    public int getRatesCountById(String id) {
+        String sql = "SELECT COUNT(*) FROM rates r " +
+                "WHERE r.item_id = ? AND r.rate_deleted_at IS NULL";
+        try (PreparedStatement prep = getConnection().prepareStatement(sql)) {
+            prep.setString(1, id);
+            ResultSet rs = prep.executeQuery();
+            rs.next();
+            return rs.getInt(1);
+        }
+        catch(SQLException ex) {
+            logger.log(Level.WARNING, "DataAccessor::getRatesCountById {0}",
+                    ex.getMessage() + " | " + sql);
+            return 0;
+        }
+    }
+
+
     public int getProductsCountByGroupSlug(String slug) {
         // зазвичай для визначення кількості повністю повторюють 
         // основний запит, тільки його вибірку замінюють на COUNT

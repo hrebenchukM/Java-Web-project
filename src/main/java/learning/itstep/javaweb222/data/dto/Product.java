@@ -53,14 +53,21 @@ public class Product {
         }        
         catch(Exception ignore) { }
         
-      
+
 
         if(withRates) {
-            p.rates = new ArrayList<>();
-            do {
-                p.rates.add(Rate.fromResultSet(rs));
-            } while(rs.next());
-        }
+            // int i = 0;
+             p.rates = new ArrayList<>();
+             try {
+                 do {
+                     p.rates.add( Rate.fromResultSet(rs) );
+                    // i += 1;
+                     //if( i >= 2 ) break;
+                 } while(rs.next());
+             }
+             catch(Exception ignore) { }
+         }
+
         else{
             try {
                 p.rate = Rate.fromResultSet(rs);

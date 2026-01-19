@@ -9,7 +9,7 @@ import learning.itstep.javaweb222.data.dto.Product;
 import learning.itstep.javaweb222.data.dto.ProductGroup;
 import learning.itstep.javaweb222.data.dto.Rate;
 import learning.itstep.javaweb222.data.dto.User;
-import learning.itstep.javaweb222.data.dto.UserAccess;
+import learning.itstep.javaweb222.data.dto.AuthCredential;
 import learning.itstep.javaweb222.data.product.ProductDao;
 import learning.itstep.javaweb222.data.rate.RateDao;
 import learning.itstep.javaweb222.data.user.UserDao;
@@ -57,15 +57,15 @@ public class DataAccessor {
     }
    // ================= USER =================
 
-    public UserAccess getUserAccess(String userId, String roleId) {
+    public AuthCredential getUserAccess(String userId, String roleId) {
         return userDao.getUserAccess(userId, roleId);
     }
 
-    public UserAccess getUserAccessByCredentials(String login, String password) {
+    public AuthCredential getUserAccessByCredentials(String login, String password) {
         return userDao.getUserAccessByCredentials(login, password);
     }
 
-    public AccessToken getTokenByUserAccess(UserAccess ua) {
+    public AccessToken getTokenByUserAccess(AuthCredential ua) {
         return userDao.getTokenByUserAccess(ua);
     }
 

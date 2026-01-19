@@ -14,7 +14,7 @@ import java.util.logging.Logger;
 import learning.itstep.javaweb222.data.core.DbProvider;
 import learning.itstep.javaweb222.data.dto.AccessToken;
 import learning.itstep.javaweb222.data.dto.User;
-import learning.itstep.javaweb222.data.dto.UserAccess;
+import learning.itstep.javaweb222.data.dto.AuthCredential;
 import learning.itstep.javaweb222.services.kdf.KdfService;
 
 
@@ -31,94 +31,136 @@ public class UserDao {
         this.kdfService = kdfService;
     }
 
-     public User getUserById(String userId) {
-        String sql = "SELECT * FROM users u WHERE u.user_id = ?";
-        try(PreparedStatement prep = db.getConnection().prepareStatement(sql)) {
-            prep.setString(1, userId);
-            ResultSet rs = prep.executeQuery();
-            if(rs.next()) {
-                return User.fromResultSet(rs);                
-            }
-        }
-        catch(Exception ex) {
-            logger.log(Level.WARNING, "DataAccessor::getUserById {0}", 
-                    ex.getMessage() + " | " + sql);
-        }
-        return null;
-    }
-     
-        public UserAccess getUserAccess(String userId, String roleId) {
-        // перевіряємо чи є UserAccess із зазначеними даними
-        String sql = "SELECT * FROM user_accesses ua "
-                + "JOIN users u ON ua.user_id = u.user_id "
-                + "JOIN user_roles ur ON ua.role_id = ur.role_id "
-                + "WHERE u.user_id = ? AND ur.role_id = ?";
+    
+    // -------------------- Users --------------------
+
+    public User getUserById(String userId) {
+        String sql = "SELECT * FROM users WHERE user_id = ? AND deleted_at IS NULL";
         try (PreparedStatement ps = db.getConnection().prepareStatement(sql)) {
             ps.setString(1, userId);
-            ps.setString(2, roleId);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
-                return UserAccess.fromResultSet(rs);
+                return User.fromResultSet(rs);
             }
-        } catch (SQLException ex) {
-            logger.log(Level.WARNING, "DataAccessor::getUserAccess {0}",
+        }
+        catch (Exception ex) {
+            logger.log(Level.WARNING, "UserDao::getUserById {0}",
                     ex.getMessage() + " | " + sql);
         }
         return null;
     }
+
     
-   
-    public UserAccess getUserAccessByCredentials(String login, String password) {
+    
+    // -------------------- Auth --------------------
+
+    /**
+     * Аутентификация по логину и паролю
+     */
+    public AuthCredential getUserAccessByCredentials(String login, String password) {
+
         String sql = """
-            SELECT 
-               *
-            FROM 
-               user_accesses ua 
-               JOIN users u ON ua.user_id = u.user_id 
-            WHERE ua.login = ?""";
-        try(PreparedStatement prep = db.getConnection().prepareStatement(sql)) {
-            prep.setString(1, login);
-            ResultSet rs = prep.executeQuery();
-            if(rs.next()) {
-                UserAccess userAccess = UserAccess.fromResultSet(rs);
-                if(kdfService.dk(password, userAccess.getSalt())
-                        .equals(userAccess.getDk())) {
-                    return userAccess;
+            SELECT ac.*, u.*
+            FROM auth_credentials ac
+            JOIN users u ON ac.user_id = u.user_id
+            WHERE ac.login = ?
+        """;
+
+        try (PreparedStatement ps = db.getConnection().prepareStatement(sql)) {
+            ps.setString(1, login);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                AuthCredential ua = AuthCredential.fromResultSet(rs);
+
+                String calculatedHash =
+                        kdfService.dk(password, ua.getSalt());
+
+                if (calculatedHash.equals(ua.getPasswordHash())) {
+                    return ua;
                 }
             }
         }
-        catch(SQLException ex) {
-            logger.log(Level.WARNING, "DataAccessor::getUserByCredentials {0}", 
+        catch (SQLException ex) {
+            logger.log(Level.WARNING, "UserDao::getUserAccessByCredentials {0}",
                     ex.getMessage() + " | " + sql);
         }
         return null;
     }
     
- 
-       
-    public AccessToken getTokenByUserAccess(UserAccess ua) {
-        AccessToken at = new AccessToken();
-        at.setTokenId(UUID.randomUUID());
-        at.setIssuedAt(new Date());
-        at.setExpiredAt( new Date( at.getIssuedAt().getTime() + 1000 * 60 * 10 ) );
-        at.setUserAccessId(ua.getId());
-        at.setUserAccess(ua);
-  
+    
+    
+    /**
+     * Проверка наличия роли у пользователя
+     */
+    public AuthCredential getUserAccess(String userId, String roleId) {
+
         String sql = """
-                INSERT INTO tokens(token_id,user_access_id,issued_at,expired_at)
-                VALUES(?,?,?,?)
+            SELECT ac.*, u.*, ur.*
+            FROM auth_credentials ac
+            JOIN users u ON ac.user_id = u.user_id
+            JOIN user_roles ur ON ac.role_id = ur.role_id
+            WHERE ac.user_id = ? AND ac.role_id = ?
         """;
-        try(PreparedStatement prep = db.getConnection().prepareStatement(sql)) {
-            prep.setString(1, at.getTokenId().toString());
-            prep.setString(2, at.getUserAccessId().toString());
-            prep.setTimestamp(3, new Timestamp(at.getIssuedAt().getTime()));
-            prep.setTimestamp(4, new Timestamp(at.getExpiredAt().getTime()));
-            prep.executeUpdate();
+
+        try (PreparedStatement ps = db.getConnection().prepareStatement(sql)) {
+            ps.setString(1, userId);
+            ps.setString(2, roleId);
+
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return AuthCredential.fromResultSet(rs);
+            }
         }
-        catch(SQLException ex) {
-            logger.log(Level.WARNING, "DataAccessor::getTokenByUserAccess {0}", 
+        catch (SQLException ex) {
+            logger.log(Level.WARNING, "UserDao::getUserAccess {0}",
                     ex.getMessage() + " | " + sql);
         }
-        return at;
+        return null;
     }
+
+    
+    // -------------------- Tokens --------------------
+
+    /**
+     * Создание access token (JWT будет строиться поверх)
+     */
+    public AccessToken createAccessToken(AuthCredential ua, String userAgent, String ip) {
+
+        AccessToken token = new AccessToken();
+        token.setTokenId(db.getDbIdentity());
+        token.setUserId(ua.getUserId());
+        token.setRoleId(ua.getRoleId());
+        token.setIssuedAt(new Date());
+        token.setExpiredAt(
+                new Date(token.getIssuedAt().getTime() + 1000 * 60 * 10)
+        );
+
+        String sql = """
+            INSERT INTO access_tokens
+            (token_id, auth_credential_id, user_id, role_id,
+             issued_at, expired_at, user_agent, ip_address)
+            VALUES (?,?,?,?,?,?,?,?)
+        """;
+
+        try (PreparedStatement ps = db.getConnection().prepareStatement(sql)) {
+            ps.setString(1, token.getTokenId().toString());
+            ps.setString(2, ua.getId().toString());
+            ps.setString(3, ua.getUserId().toString());
+            ps.setString(4, ua.getRoleId());
+            ps.setTimestamp(5, new Timestamp(token.getIssuedAt().getTime()));
+            ps.setTimestamp(6, new Timestamp(token.getExpiredAt().getTime()));
+            ps.setString(7, userAgent);
+            ps.setString(8, ip);
+
+            ps.executeUpdate();
+            return token;
+        }
+        catch (SQLException ex) {
+            logger.log(Level.WARNING, "UserDao::createAccessToken {0}",
+                    ex.getMessage() + " | " + sql);
+            return null;
+        }
+    }
+    
 }

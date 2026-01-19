@@ -14,7 +14,7 @@ import java.util.Base64;
 import java.util.Map;
 import learning.itstep.javaweb222.data.DataAccessor;
 import learning.itstep.javaweb222.data.dto.AccessToken;
-import learning.itstep.javaweb222.data.dto.UserAccess;
+import learning.itstep.javaweb222.data.dto.AuthCredential;
 import learning.itstep.javaweb222.data.jwt.JwtToken;
 import learning.itstep.javaweb222.models.user.UserProfileModel;
 import learning.itstep.javaweb222.rest.RestMeta;
@@ -84,7 +84,7 @@ public class UserServlet extends HttpServlet {
         }
         String userId = jwtToken.getPayload().getSub();
         try {
-            UserAccess userAccess = dataAccessor.getUserAccess(
+            AuthCredential userAccess = dataAccessor.getUserAccess(
                     jwtToken.getPayload().getSub(),
                     jwtToken.getPayload().getAud()
             );
@@ -144,7 +144,7 @@ public class UserServlet extends HttpServlet {
             return;
         }
         
-        UserAccess ua = dataAccessor.getUserAccessByCredentials(parts[0], parts[1]);
+        AuthCredential ua = dataAccessor.getUserAccessByCredentials(parts[0], parts[1]);
         if(ua == null) {
             this.restResponse.setStatus(RestStatus.status401);
             this.restResponse.setData("Credentials rejected. Access denied");

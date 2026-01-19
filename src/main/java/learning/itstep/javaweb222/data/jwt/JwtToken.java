@@ -30,30 +30,41 @@ public class JwtToken {
         jwt.setSignature(parts[2]);
         return jwt;
     }
-    
     public static JwtToken fromAccessToken(AccessToken at) {
         JwtToken jwt = new JwtToken();
-        jwt.setHeader( new JwtHeader() );
+        jwt.setHeader(new JwtHeader());
+
         JwtPayload payload = new JwtPayload();
-        payload.setJti(at.getTokenId().toString());
-        payload.setAud(at.getUserAccess().getRoleId());
-        payload.setIat(at.getIssuedAt().toString());
-        payload.setExp(at.getExpiredAt().toString());
+
+        // --- JWT core ---
+        payload.setJti(at.getTokenId().toString());   // access_tokens.token_id
+        payload.setSub(at.getUserId().toString());    // access_tokens.user_id
+        payload.setAud(at.getRoleId());               // access_tokens.role_id
         payload.setIss("JavaWeb222");
-        payload.setSub(at.getUserAccess().getUserId().toString());
-        Date dob = at.getUserAccess().getUser().getBirthdate();
-        if( dob != null ) {
-            //payload.setDob( dob.toString() );
-            java.text.SimpleDateFormat fmt = new java.text.SimpleDateFormat("yyyy-MM-dd");
-            payload.setDob(fmt.format(dob));
+
+        if (at.getIssuedAt() != null) {
+            payload.setIat(at.getIssuedAt().toString());
         }
-        payload.setName(at.getUserAccess().getUser().getName());
-        payload.setEmail(at.getUserAccess().getUser().getEmail());
+        if (at.getExpiredAt() != null) {
+            payload.setExp(at.getExpiredAt().toString());
+        }
+
+        // --- User info (JOIN users) ---
+        if (at.getUser() != null) {
+            String first = at.getUser().getFirstName();
+            String second = at.getUser().getSecondName();
+
+            payload.setName(
+                (first != null ? first : "") +
+                (second != null ? " " + second : "")
+            );
+            payload.setEmail(at.getUser().getEmail());
+        }
+
         jwt.setPayload(payload);
-       
         return jwt;
     }
-    
+
     public String getBody() {
         Encoder encoder = Base64.getEncoder();
         return  encoder.encodeToString( gson.toJson(header).getBytes() ) +

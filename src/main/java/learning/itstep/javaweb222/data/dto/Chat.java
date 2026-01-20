@@ -14,6 +14,7 @@ public class Chat {
 
     private User creator;
 
+    
     public static Chat fromResultSet(ResultSet rs) throws SQLException {
         Chat c = new Chat();
         c.setId(UUID.fromString(rs.getString("chat_id")));

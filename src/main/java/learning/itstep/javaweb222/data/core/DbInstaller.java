@@ -419,21 +419,22 @@ public class DbInstaller {
         )) return false;
 
         
-        // ------------------ Groups ------------------
-        if (!exec(
-            "CREATE TABLE IF NOT EXISTS groups ("
-            + "group_id CHAR(36) PRIMARY KEY,"
-            + "owner_id CHAR(36) NOT NULL,"
-            + "name VARCHAR(128) NOT NULL,"
-            + "description TEXT NULL,"
-            + "created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,"
-            + "updated_at DATETIME NULL,"
-            + "deleted_at DATETIME NULL"
-            + ") ENGINE=INNODB "
-            + "DEFAULT CHARSET=utf8mb4 "
-            + "COLLATE=utf8mb4_unicode_ci",
-            "groups"
-        )) return false;
+            // ------------------ Groups ------------------
+           if (!exec(
+               "CREATE TABLE IF NOT EXISTS user_groups ("
+               + "group_id CHAR(36) PRIMARY KEY,"
+               + "owner_id CHAR(36) NOT NULL,"
+               + "name VARCHAR(128) NOT NULL,"
+               + "description TEXT NULL,"
+               + "created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,"
+               + "updated_at DATETIME NULL,"
+               + "deleted_at DATETIME NULL"
+               + ") ENGINE=INNODB "
+               + "DEFAULT CHARSET=utf8mb4 "
+               + "COLLATE=utf8mb4_unicode_ci",
+               "user_groups"
+           )) return false;
+
 
         
         // ------------------ Groups: Members ------------------

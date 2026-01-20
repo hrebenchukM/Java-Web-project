@@ -18,6 +18,7 @@ public class Page {
 
     private User owner;
 
+
     public static Page fromResultSet(ResultSet rs) throws SQLException {
         Page p = new Page();
         p.setId(UUID.fromString(rs.getString("page_id")));

@@ -1,25 +1,38 @@
 package learning.itstep.javaweb222.models.user;
 
 import java.util.List;
-import learning.itstep.javaweb222.data.dto.Cart;
+import learning.itstep.javaweb222.data.dto.Experience;
 import learning.itstep.javaweb222.data.dto.User;
-import learning.itstep.javaweb222.data.dto.UserRole;
-
 
 public class UserProfileModel {
-    private String login;
+
     private User user;
-    private UserRole role;
-    private List<Cart> carts;
+    private String role;
+    private String login;
 
-    public String getLogin() {
-        return login;
+    private int profileViews;
+    private int postViews;
+   
+
+    
+    public int getProfileViews() {
+        return profileViews;
     }
-
-    public UserProfileModel setLogin(String login) {
-        this.login = login;
+    
+    public UserProfileModel setProfileViews(int v) {
+        this.profileViews = v;
         return this;
     }
+
+    public int getPostViews() { 
+        return postViews;
+    }
+    
+    public UserProfileModel setPostViews(int v) {
+        this.postViews = v;
+        return this;
+    }
+
 
     public User getUser() {
         return user;
@@ -30,22 +43,21 @@ public class UserProfileModel {
         return this;
     }
 
-    public UserRole getRole() {
+    public String getRole() {
         return role;
     }
 
-    public UserProfileModel setRole(UserRole role) {
+    public UserProfileModel setRole(String role) {
         this.role = role;
         return this;
     }
 
-    public List<Cart> getCarts() {
-        return carts;
+    public String getLogin() {
+        return login;
     }
 
-    public UserProfileModel setCarts(List<Cart> carts) {
-        this.carts = carts;
+    public UserProfileModel setLogin(String login) {
+        this.login = login;
         return this;
     }
-    
 }

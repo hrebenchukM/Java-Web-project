@@ -150,54 +150,9 @@
             <a href="https://tomcat.apache.org/">Apache Tomcat</a>
             <a href="https://glassfish.org/">Eclipse GlassFish</a>
             <a href="https://www.wildfly.org/">WildFly</a>
-        </p>
-        <h2>JSP</h2>
-        <p>
-            Java Server Pages - технологія створення веб-сторінок
-        </p>
-        <h3>Вирази та інструкції</h3>
-        <p>
-            Інструкції (дії без результату) задаються спеціальним тегом
-            <code>&lt;% String str = "Hello, World!"; %&gt;</code>
-            <% String str = "Hello, World!"; %>
-            <br/>
-            Вирази (дії з результатом, що виводиться) задаються спеціальним тегом
-            <code>&lt;%= str + "!" %&gt; &rarr; <%= str + "!" %></code>
-        </p>
-        <h3>Управління виконанням</h3>
-        <p>
-            <% String[] arr = {"Item 1","Item 2","Item 3","Item 4","Item 5"}; %>
-            Спеціальних операторів JSP немає, управління формуються засобами
-            інструкцій, що розриваються для виведення HTML.            
-        </p>
-<pre>
-&lt;ul&gt;
-    &lt;% for (int i = 0; i < arr.length; i++) { %&gt;  <----|цикл
-        &lt;li&gt;&lt;%= arr[i] %&gt;&lt;/li&gt;                         |  тіло циклу
-    &lt;% } %&gt;                                       <----|кінець
-&lt;/ul&gt;
-</pre>        
-        <ul>
-            <% for (int i = 0; i < arr.length; i++) { %>
-                <li><%= arr[i] %></li>    
-            <% } %>
-        </ul>
-        <p>
-            Вивести парні індекси курсивом, непарні - жирним (0 вважати парним)
-        </p>
-        
-        <ul>
-            <% for (int i = 0; i < arr.length; i++) { %>
-                <li>
-                    <% if(i % 2 == 0) { %>
-                        <i><%= arr[i] %></i>
-                    <% }  else { %>
-                        <b><%= arr[i] %></b>
-                    <% } %>
-                </li>    
-            <% } %>
-        </ul>
-        
+     
+   
+  
         <h3>Шаблонізація, підключення компонентів</h3>
         <jsp:include page="WEB-INF/fragment.jsp" >
             <jsp:param name="key" value="Value"/>

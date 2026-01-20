@@ -102,7 +102,129 @@ public class DbSeeder {
 
         if (!exec(sql, "seed auth_credentials admin")) return false;
 
+        
+        
+        // ------------------ Admin profile data ------------------
+        sql =
+            "UPDATE users SET " +
+            "profile_title='Lead UI/UX Designer', " +
+            "headline='Lead UI/UX Designer · CD Project Red', " +
+            "gen_info='Experienced UI/UX designer with focus on product design.', " +
+            "university='Warsaw University', " +
+            "location='Warsaw, Poland', " +
+            "portfolio_url='https://portfolio.example.com', " +
+            "avatar_url='admin.jpg' " +
+            "WHERE user_id='69231c55-9851-11f0-b1b7-62517600596c'";
+
+        if (!exec(sql, "seed users admin profile")) return false;
+
+    // ------------------ Admin posts (UUID) ------------------
+    sql =
+        "INSERT INTO posts(post_id, user_id, content) VALUES " +
+        "(UUID(), '69231c55-9851-11f0-b1b7-62517600596c', 'Seed post 1')," +
+        "(UUID(), '69231c55-9851-11f0-b1b7-62517600596c', 'Seed post 2')," +
+        "(UUID(), '69231c55-9851-11f0-b1b7-62517600596c', 'Seed post 3')";
+
+    if (!exec(sql, "seed admin posts")) return false;
+
+     // ------------------ Analytics: Profile Views ------------------
+    sql =
+        "INSERT INTO profile_views(pv_id, profile_owner_id, viewer_user_id, source) VALUES " +
+        "(UUID(), '69231c55-9851-11f0-b1b7-62517600596c', NULL, 'seed')," +
+        "(UUID(), '69231c55-9851-11f0-b1b7-62517600596c', NULL, 'seed')," +
+        "(UUID(), '69231c55-9851-11f0-b1b7-62517600596c', NULL, 'seed')," +
+        "(UUID(), '69231c55-9851-11f0-b1b7-62517600596c', NULL, 'seed')," +
+        "(UUID(), '69231c55-9851-11f0-b1b7-62517600596c', NULL, 'seed')";
+
+    if (!exec(sql, "seed profile_views admin")) return false;
+
+    // ------------------ Analytics: Post Views (UUID-safe) ------------------
+    sql =
+        "INSERT INTO post_views(post_view_id, post_id, viewer_user_id, source) " +
+        "SELECT UUID(), p.post_id, NULL, 'seed' " +
+        "FROM posts p " +
+        "WHERE p.user_id = '69231c55-9851-11f0-b1b7-62517600596c'";
+
+    if (!exec(sql, "seed post_views admin")) return false;
+
+ 
+      
+    
+    
+    
+    
+    
+    
+    // ------------------ Companies ------------------
+         sql =
+        "INSERT INTO companies (" +
+        "company_id, name, logo_url, industry, location, website_url, description" +
+        ") VALUES " +
+
+        "(" +
+        "UUID(), 'CD Project Red', 'cdpr.png', 'Game Development', 'Warsaw, Poland', " +
+        "'https://en.cdprojektred.com', 'AAA game development studio'" +
+        ")," +
+
+        "(" +
+        "UUID(), 'Microsoft', 'microsoft.png', 'Technology', 'Redmond, USA', " +
+        "'https://www.microsoft.com', 'Global technology company'" +
+        ")," +
+
+        "(" +
+        "UUID(), 'Sony', 'sony.png', 'Electronics & Entertainment', 'Tokyo, Japan', " +
+        "'https://www.sony.com', 'Multinational conglomerate'" +
+        ")";
+
+         if (!exec(sql, "seed companies")) return false;
+
+         // ------------------ Admin experiences ------------------
+        sql =
+            "INSERT INTO experiences (" +
+            "experience_id, user_id, company_id, position, employment_type, " +
+            "work_location_type, location, start_date, end_date, description" +
+            ") " +
+
+            // ===== CD Project Red =====
+            "SELECT UUID(), " +
+            "'69231c55-9851-11f0-b1b7-62517600596c', c.company_id, " +
+            "'Lead UI/UX Designer', 'Full-time', 'On-site', 'Warsaw, Poland', " +
+            "'2021-11-01', NULL, " +
+            "'Created and optimized responsive web and app interfaces.\n" +
+            "Led user testing and data-driven design iterations.\n" +
+            "Unified design language across products.\n" +
+            "Partnered with engineering teams for pixel-perfect designs.'" +
+            " FROM companies c WHERE c.name = 'CD Project Red' " +
+
+            "UNION ALL " +
+
+            // ===== Microsoft =====
+            "SELECT UUID(), " +
+            "'69231c55-9851-11f0-b1b7-62517600596c', c.company_id, " +
+            "'Senior UI/UX Designer', 'Full-time', 'On-site', 'Redmond, USA', " +
+            "'2018-01-01', '2021-11-01', " +
+            "'Designed and launched user-friendly platforms.\n" +
+            "Conducted usability research and built scalable design systems.'" +
+            " FROM companies c WHERE c.name = 'Microsoft' " +
+
+            "UNION ALL " +
+
+            // ===== Sony =====
+            "SELECT UUID(), " +
+            "'69231c55-9851-11f0-b1b7-62517600596c', c.company_id, " +
+            "'UI/UX Designer', 'Part-time', 'Remote', 'Remote', " +
+            "'2016-12-01', '2018-10-01', " +
+            "'Designed intuitive web and mobile applications.\n" +
+            "Conducted user research and created wireframes and prototypes.'" +
+            " FROM companies c WHERE c.name = 'Sony'";
+
+        if (!exec(sql, "seed admin experiences")) return false;
+
+
+
+
         return true;
     }
+    
     
 }

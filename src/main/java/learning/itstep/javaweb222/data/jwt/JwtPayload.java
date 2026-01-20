@@ -1,9 +1,10 @@
 package learning.itstep.javaweb222.data.jwt;
 
 public class JwtPayload {
-    private String jti;    
+    private String jti;
     private String iat;
     private String exp;
+
     private String sub;
     private String aud;
     private String iss;
@@ -91,6 +92,6 @@ public class JwtPayload {
     public void setDob(String dob) {
         this.dob = dob;
     }
-    
-    
+
+
 }

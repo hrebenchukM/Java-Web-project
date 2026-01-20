@@ -20,6 +20,9 @@ public class Post {
 
     private User user;
 
+    
+
+    
     public static Post fromResultSet(ResultSet rs) throws SQLException {
         Post p = new Post();
         p.setId(UUID.fromString(rs.getString("post_id")));

@@ -17,6 +17,7 @@ public class Group {
 
     private User owner;
 
+     
     public static Group fromResultSet(ResultSet rs) throws SQLException {
         Group g = new Group();
         g.setId(UUID.fromString(rs.getString("group_id")));

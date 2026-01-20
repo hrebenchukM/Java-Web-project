@@ -14,16 +14,20 @@ public class JwtToken {
     private String     signature;
     
     public static JwtToken fromParts(String[] parts) {
+        if (parts == null || parts.length != 3) {
+            throw new IllegalArgumentException("Invalid JWT format");
+        }
+
         JwtToken jwt = new JwtToken();
         jwt.setHeader( 
                 gson.fromJson( 
-                    new String( Base64.getDecoder().decode(parts[0]) ),
+                    new String(Base64.getDecoder().decode(parts[0]) ),
                     JwtHeader.class
                 )
         );
         jwt.setPayload(
                 gson.fromJson( 
-                    new String( Base64.getDecoder().decode(parts[1]) ),
+                    new String(Base64.getDecoder().decode(parts[1]) ),
                     JwtPayload.class
                 )
         );
@@ -44,9 +48,10 @@ public class JwtToken {
 
         if (at.getIssuedAt() != null) {
             payload.setIat(at.getIssuedAt().toString());
+          
         }
         if (at.getExpiredAt() != null) {
-            payload.setExp(at.getExpiredAt().toString());
+           payload.setExp(at.getExpiredAt().toString());
         }
 
         // --- User info (JOIN users) ---
@@ -66,7 +71,8 @@ public class JwtToken {
     }
 
     public String getBody() {
-        Encoder encoder = Base64.getEncoder();
+       Encoder encoder = Base64.getEncoder();
+
         return  encoder.encodeToString( gson.toJson(header).getBytes() ) +
                 "." +
                 encoder.encodeToString( gson.toJson(payload).getBytes() );

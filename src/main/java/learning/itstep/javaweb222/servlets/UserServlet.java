@@ -24,14 +24,14 @@ import learning.itstep.javaweb222.services.Signature.SignatureService;
 
 @Singleton
 public class UserServlet extends HttpServlet {
-    private final DataAccessor dataAccessor;
+    private final DataAccessor  dataAccessor;
     private final SignatureService signatureService;
     private final Gson gson = new GsonBuilder().serializeNulls().create();
     private RestResponse restResponse;
     private JwtToken jwtToken;
         
     @Inject
-    public UserServlet(DataAccessor dataAccessor, SignatureService signatureService) {
+    public UserServlet(DataAccessor  dataAccessor, SignatureService signatureService) {
         this.dataAccessor = dataAccessor;
         this.signatureService = signatureService;
     }
@@ -46,7 +46,8 @@ public class UserServlet extends HttpServlet {
                 .setManipulations(new String[] {"GET", "POST"})
                 .setLinks( Map.ofEntries(
                     Map.entry("authenticate", "GET /user"),
-                    Map.entry("profile", "GET /user/profile")
+                    Map.entry("profile", "GET /user/profile"),
+                    Map.entry("analytics", "GET /user/analytics")
                 ) )
         );
         jwtToken = (JwtToken) req.getAttribute("JWT");
@@ -69,6 +70,25 @@ public class UserServlet extends HttpServlet {
         else if("/profile".equals(path)) {
             this.profile(req, resp);
         }
+        else if("/analytics".equals(path)) {
+            this.analytics(req, resp);
+        }
+        
+        else if ("/experience".equals(path)) {
+            if (jwtToken == null) {
+                restResponse.setStatus(RestStatus.status401);
+                return;
+            }
+
+            restResponse.setData(
+                dataAccessor.getUserExperienceBlocks(
+                    jwtToken.getPayload().getSub()
+                )
+            );
+            restResponse.getMeta().setDataType("array");
+        }
+
+
         else {
             this.restResponse.setStatus(RestStatus.status404);
             this.restResponse.setData("Path not found: " + path);
@@ -99,9 +119,17 @@ public class UserServlet extends HttpServlet {
             this.restResponse.setData(
                     new UserProfileModel()
                     .setLogin(userAccess.getLogin())
-                    .setRole(userAccess.getUserRole())
+                    .setRole(userAccess.getRoleId())
                     .setUser(userAccess.getUser())
-                    .setCarts(dataAccessor.getUserCarts(userId))
+                     .setProfileViews(
+                        dataAccessor.getProfileViewsCount(userId)
+                    )
+                    .setPostViews(
+                        dataAccessor.getPostViewsCount(userId)
+                    )
+                    
+
+                   
             );
             this.restResponse.getMeta().setDataType("object");
         }
@@ -111,6 +139,34 @@ public class UserServlet extends HttpServlet {
             this.restResponse.setData(ex.getMessage());
         }   
     }
+    private void analytics(HttpServletRequest req, HttpServletResponse resp) {
+
+        if(jwtToken == null) {
+            this.restResponse.setStatus(RestStatus.status401);
+            return;
+        }
+
+        String userId = jwtToken.getPayload().getSub();
+
+        try {
+            this.restResponse.setData(
+                Map.of(
+                    "profileViews",
+                    dataAccessor.getProfileViewsCount(userId),
+                    "postViews",
+                    dataAccessor.getPostViewsCount(userId)
+                )
+            );
+            this.restResponse.getMeta().setDataType("object");
+        }
+        catch(Exception ex) {
+            this.restResponse.getMeta().setDataType("string");
+            this.restResponse.setStatus(RestStatus.status400);
+            this.restResponse.setData(ex.getMessage());
+        }
+    }
+   
+
     
     private void authenticate(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         // Автентифікація за RFC 7617                         // Authorization: Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==
@@ -150,12 +206,17 @@ public class UserServlet extends HttpServlet {
             this.restResponse.setData("Credentials rejected. Access denied");
             return;
         }
-        AccessToken at = dataAccessor.getTokenByUserAccess(ua);
+        AccessToken at =  dataAccessor.createAccessToken(
+                        ua,
+                        req.getHeader("User-Agent"),
+                        req.getRemoteAddr()
+                );
         JwtToken jwt = JwtToken.fromAccessToken(at);
         jwt.setSignature(
             Base64.getEncoder().encodeToString(
-                    signatureService.getSignatureBytes(jwt.getBody(), "secret")
+                signatureService.getSignatureBytes(jwt.getBody(), "secret")
         ));
+
         this.restResponse.setData( jwt.toString() );
     }
 

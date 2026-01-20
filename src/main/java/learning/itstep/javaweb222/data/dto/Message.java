@@ -19,6 +19,7 @@ public class Message {
     private User sender;
     private Chat chat;
 
+
     public static Message fromResultSet(ResultSet rs) throws SQLException {
         Message m = new Message();
         m.setId(UUID.fromString(rs.getString("message_id")));

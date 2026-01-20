@@ -16,16 +16,10 @@ public class ServletsConfig extends ServletModule {
         // Налаштування сервлетів
         serve("/"       ).with(HomeServlet.class   );
         serve("/admin/*").with(AdminServlet.class  );
-        serve("/cart/*" ).with(CartServlet.class   );
-        serve("/cart" ).with(CartServlet.class   );
         serve("/file/*" ).with(FileServlet.class   );
-        serve("/groups" ).with(GroupsServlet.class ); 
-        serve("/groups/*" ).with(GroupsServlet.class );
-        serve("/product/*" ).with(ProductServlet.class );
+        serve("/post/*" ).with(PostServlet.class );
         serve("/user"   ).with(UserServlet.class   );
         serve("/user/*" ).with(UserServlet.class   );
-        serve("/rate"   ).with(RateServlet.class   );
-        serve("/rate/*"   ).with(RateServlet.class   );
     }
     
 }

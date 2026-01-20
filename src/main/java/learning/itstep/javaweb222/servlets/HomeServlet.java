@@ -25,30 +25,33 @@ public class HomeServlet extends HttpServlet {
         this.signatureService = signatureService;
     }
     
-    @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        System.out.println("HomeServlet::doGet");  // вивід до out сервера (Apache)
-        // атрибут, що буде у req протягом подальшої обробки (у т.ч. на JSP)
-        req.setAttribute("HomeServlet", 
-                "Hello from HomeServlet " 
-                + kdfService.dk("123", "")
-                        + "<br/>"
-                + (dataAccessor.install() ? "Install OK" : "Install error" )
-                        + "<br/>"
-                // + (dataAccessor.seed() ? "Seed OK" : "Seed error" )
-                + signatureService.getSignatureHex("123", "456") 
-                + "<br/>JWT: " + req.getAttribute("JWT")
-                + "<br/>JwtStatus: " + req.getAttribute("JwtStatus")
-        );
-        // задача: вивести значення атрибутів запиту а) "JWT" б) "JwtStatus"
-        
-        // return View()
-        req.getRequestDispatcher("index.jsp").forward(req, resp);
-        
-        // return Json()
-        // resp.setHeader("Content-Type", "application/json");
-        // resp.getWriter().print("\"This is JSON string\"");
-    }
+    private static boolean installed = false;
+
+      @Override
+      protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+              throws ServletException, IOException {
+
+          String installResult = "";
+
+         if (!installed) {
+            boolean ok =
+                dataAccessor.install() &&
+                dataAccessor.seed();
+
+            installResult = ok ? "Install + Seed OK" : "Install/Seed error";
+            installed = true;
+        }
+
+
+          req.setAttribute("HomeServlet",
+                  "Hello from HomeServlet<br/>" +
+                  installResult
+          );
+
+          req.getRequestDispatcher("index.jsp").forward(req, resp);
+      }
+
+
     
 }
 /*

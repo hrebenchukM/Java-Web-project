@@ -60,6 +60,7 @@ public class AuthFilter implements Filter {
                     String signature = Base64.getEncoder().encodeToString(
                         signatureService.getSignatureBytes(jwtBody, "secret")
                     );
+
                     if(parts[2].equals(signature)) {
                         req.setAttribute("JWT", JwtToken.fromParts(parts));
                         req.setAttribute(authKey, "Ok");

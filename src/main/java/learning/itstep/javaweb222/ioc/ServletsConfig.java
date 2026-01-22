@@ -9,8 +9,8 @@ public class ServletsConfig extends ServletModule {
     @Override
     protected void configureServlets() {
         // Налаштування фільтрів
-        filter("/*").through(CharsetFilter.class);
         filter("/*").through(CorsFilter.class);
+        filter("/*").through(CharsetFilter.class);
         filter("/*").through(AuthFilter.class);
         
         // Налаштування сервлетів

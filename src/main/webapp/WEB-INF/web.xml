@@ -8,6 +8,7 @@
             30
         </session-timeout>
     </session-config>
+
      <!-- Guice Filter - частина системи ІоС -->
     <filter>
         <filter-name>guiceFilter</filter-name>

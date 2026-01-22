@@ -16,12 +16,14 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import learning.itstep.javaweb222.data.core.DbProvider;
+import learning.itstep.javaweb222.data.dto.Academy;
 import learning.itstep.javaweb222.data.dto.Company;
 import learning.itstep.javaweb222.data.dto.Education;
 import learning.itstep.javaweb222.data.dto.Experience;
 import learning.itstep.javaweb222.data.dto.User;
 import learning.itstep.javaweb222.data.dto.UserLanguage;
 import learning.itstep.javaweb222.data.dto.UserSkill;
+import learning.itstep.javaweb222.models.profile.EducationBlockModel;
 import learning.itstep.javaweb222.models.profile.ExperienceBlockModel;
 
 @Singleton
@@ -42,14 +44,40 @@ public class ProfileDao {
 
    public List<ExperienceBlockModel> getExperienceBlocksByUser(String userId) {
 
-    String sql = """
-        SELECT e.*, c.*
-        FROM experiences e
-        JOIN companies c ON e.company_id = c.company_id
-        WHERE e.user_id = ?
-          AND e.deleted_at IS NULL
-        ORDER BY e.start_date DESC
-    """;
+  String sql = """
+SELECT
+        e.experience_id,
+        e.user_id,
+        e.company_id,
+        e.position,
+        e.employment_type,
+        e.work_location_type,
+        e.location,
+        e.start_date,
+        e.end_date,
+        e.description,
+        e.created_at,
+        e.updated_at,
+        e.deleted_at,
+    
+        c.company_id,
+        c.owner_user_id,
+        c.name,
+        c.logo_url,
+        c.industry,
+        c.location,
+        c.website_url,
+        c.description,
+        c.created_at,
+        c.updated_at,
+        c.deleted_at
+    
+    FROM experiences e
+    JOIN companies c ON e.company_id = c.company_id
+    WHERE e.user_id = ?
+      AND e.deleted_at IS NULL
+    ORDER BY e.start_date DESC
+""";
 
     List<ExperienceBlockModel> res = new ArrayList<>();
 
@@ -77,27 +105,157 @@ public class ProfileDao {
 
     // ================== EDUCATIONS ==================
 
-    public List<Education> getEducationsByUser(String userId) {
-        String sql = """
-            SELECT * FROM educations
-            WHERE user_id = ? AND deleted_at IS NULL
-            ORDER BY start_date DESC
-        """;
+  public List<EducationBlockModel> getEducationBlocksByUser(String userId) {
 
-        List<Education> res = new ArrayList<>();
-        try (PreparedStatement prep = db.getConnection().prepareStatement(sql)) {
-            prep.setString(1, userId);
-            ResultSet rs = prep.executeQuery();
-            while (rs.next()) {
-                res.add(Education.fromResultSet(rs));
+    String sql = """
+        SELECT
+            e.education_id,
+            e.user_id,
+            e.academy_id,
+            e.institution,
+            e.degree,
+            e.field_of_study,
+            e.start_date,
+            e.end_date,
+            e.source,
+            e.created_at,
+            e.updated_at,
+            e.deleted_at,
+
+            a.academy_id,
+            a.name,
+            a.logo_url,
+            a.website_url,
+            a.created_at,
+            a.updated_at
+
+        FROM educations e
+        LEFT JOIN academies a ON e.academy_id = a.academy_id
+        WHERE e.user_id = ?
+          AND e.deleted_at IS NULL
+        ORDER BY e.start_date DESC
+    """;
+
+    List<EducationBlockModel> res = new ArrayList<>();
+
+    try (PreparedStatement ps = db.getConnection().prepareStatement(sql)) {
+        ps.setString(1, userId);
+        ResultSet rs = ps.executeQuery();
+
+        while (rs.next()) {
+            EducationBlockModel block = new EducationBlockModel()
+                .setEducation(Education.fromResultSet(rs))
+                .setAcademy(
+                    rs.getString("academy_id") == null
+                        ? null
+                        : Academy.fromResultSet(rs)
+                );
+
+            res.add(block);
+        }
+    }
+    catch (SQLException ex) {
+        logger.log(Level.WARNING,
+            "ProfileDao::getEducationBlocksByUser {0}",
+            ex.getMessage() + " | " + sql);
+    }
+
+    return res;
+}
+
+
+public void addEducation(String userId, Education e) throws Exception {
+
+    UUID userGuid;
+    try {
+        userGuid = UUID.fromString(userId);
+    }
+    catch (Exception ex) {
+        throw new Exception("Invalid userId UUID");
+    }
+
+    // ===== get or create academy =====
+    UUID academyId = null;
+
+    if (e.getInstitution() != null && !e.getInstitution().isBlank()) {
+
+        String findSql = "SELECT academy_id FROM academies WHERE name = ?";
+
+        try (PreparedStatement ps = db.getConnection().prepareStatement(findSql)) {
+            ps.setString(1, e.getInstitution());
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                academyId = UUID.fromString(rs.getString("academy_id"));
             }
         }
-        catch (SQLException ex) {
-            logger.log(Level.WARNING, "ProfileDao::getEducationsByUser {0}",
-                    ex.getMessage() + " | " + sql);
+
+        if (academyId == null) {
+            String insertSql = """
+                INSERT INTO academies (academy_id, name)
+                VALUES (UUID(), ?)
+            """;
+
+            try (PreparedStatement ps = db.getConnection().prepareStatement(insertSql)) {
+                ps.setString(1, e.getInstitution());
+                ps.executeUpdate();
+            }
+
+            try (PreparedStatement ps = db.getConnection().prepareStatement(findSql)) {
+                ps.setString(1, e.getInstitution());
+                ResultSet rs = ps.executeQuery();
+                if (rs.next()) {
+                    academyId = UUID.fromString(rs.getString("academy_id"));
+                }
+            }
         }
-        return res;
     }
+
+    // ===== insert education =====
+    String sql = """
+        INSERT INTO educations (
+            education_id,
+            user_id,
+            academy_id,
+            institution,
+            degree,
+            field_of_study,
+            start_date,
+            end_date,
+            source
+        ) VALUES (
+            UUID(), ?, ?, ?, ?, ?, ?, ?, ?
+        )
+    """;
+
+    try (PreparedStatement ps = db.getConnection().prepareStatement(sql)) {
+
+        ps.setString(1, userGuid.toString());
+
+        if (academyId != null)
+            ps.setString(2, academyId.toString());
+        else
+            ps.setNull(2, java.sql.Types.CHAR);
+
+        ps.setString(3, e.getInstitution());
+        ps.setString(4, e.getDegree());
+        ps.setString(5, e.getFieldOfStudy());
+
+        ps.setDate(6,
+            e.getStartDate() == null ? null :
+            new java.sql.Date(e.getStartDate().getTime())
+        );
+
+        ps.setDate(7,
+            e.getEndDate() == null ? null :
+            new java.sql.Date(e.getEndDate().getTime())
+        );
+
+        ps.setString(8, e.getSource());
+
+        ps.executeUpdate();
+    }
+}
+
 
     // ================== SKILLS ==================
 
@@ -191,7 +349,82 @@ public class ProfileDao {
         }
         return 0;
     }
-   
+
+    public void addExperience(String userId, Experience e) throws Exception {
+
+        // === UUID validation ===
+        UUID userGuid;
+        UUID companyGuid;
+
+        try {
+            userGuid = UUID.fromString(userId);
+            companyGuid = e.getCompanyId();
+        }
+        catch (Exception ignore) {
+            throw new Exception("Invalid UUID format");
+        }
+
+        // === check company exists ===
+        String sql = "SELECT company_id FROM companies WHERE company_id = ?";
+
+        try (PreparedStatement ps = db.getConnection().prepareStatement(sql)) {
+            ps.setString(1, companyGuid.toString());
+            ResultSet rs = ps.executeQuery();
+            if (!rs.next()) {
+                throw new Exception("Company not found");
+            }
+        }
+        catch (SQLException ex) {
+            logger.log(Level.WARNING,
+                "ProfileDao::addExperience {0}",
+                ex.getMessage() + " | " + sql);
+            throw ex;
+        }
+
+        // === insert experience ===
+        sql = """
+            INSERT INTO experiences (
+                experience_id,
+                user_id,
+                company_id,
+                position,
+                employment_type,
+                work_location_type,
+                location,
+                start_date,
+                end_date,
+                description
+            ) VALUES (
+                UUID(), ?, ?, ?, ?, ?, ?, ?, ?, ?
+            )
+        """;
+
+        try (PreparedStatement ps = db.getConnection().prepareStatement(sql)) {
+
+            ps.setString(1, userGuid.toString());
+            ps.setString(2, companyGuid.toString());
+            ps.setString(3, e.getPosition());
+            ps.setString(4, e.getEmploymentType());
+            ps.setString(5, e.getWorkLocationType());
+            ps.setString(6, e.getLocation());
+            ps.setDate(7, new java.sql.Date(e.getStartDate().getTime()));
+            ps.setDate(8,
+                e.getEndDate() == null
+                    ? null
+                    : new java.sql.Date(e.getEndDate().getTime())
+            );
+            ps.setString(9, e.getDescription());
+
+            ps.executeUpdate();
+        }
+        catch (SQLException ex) {
+            logger.log(Level.WARNING,
+                "ProfileDao::addExperience {0}",
+                ex.getMessage() + " | " + sql);
+            throw ex;
+        }
+    }
+
   
     
 }

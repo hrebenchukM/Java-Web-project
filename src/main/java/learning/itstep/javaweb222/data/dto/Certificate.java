@@ -3,7 +3,7 @@ package learning.itstep.javaweb222.data.dto;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.sql.Date;
+import java.util.Date;
 import java.util.UUID;
 
 public class Certificate {
@@ -16,9 +16,9 @@ public class Certificate {
     private Date expiryDate;
     private String accreditationId;
     private String organizationUrl;
-    private java.util.Date createdAt;
-    private java.util.Date updatedAt;
-    private java.util.Date deletedAt;
+    private Date createdAt;
+    private Date updatedAt;
+    private Date deletedAt;
 
     public static Certificate fromResultSet(ResultSet rs) throws SQLException {
         Certificate c = new Certificate();

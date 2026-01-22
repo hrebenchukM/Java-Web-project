@@ -118,36 +118,67 @@ public class DbSeeder {
 
         if (!exec(sql, "seed users admin profile")) return false;
 
-    // ------------------ Admin posts (UUID) ------------------
-    sql =
-        "INSERT INTO posts(post_id, user_id, content) VALUES " +
-        "(UUID(), '69231c55-9851-11f0-b1b7-62517600596c', 'Seed post 1')," +
-        "(UUID(), '69231c55-9851-11f0-b1b7-62517600596c', 'Seed post 2')," +
-        "(UUID(), '69231c55-9851-11f0-b1b7-62517600596c', 'Seed post 3')";
+        // ------------------ Admin posts (safe) ------------------
+        sql =
+            "INSERT INTO posts (post_id, user_id, content) " +
+            "SELECT UUID(), '69231c55-9851-11f0-b1b7-62517600596c', 'Seed post 1' " +
+            "WHERE NOT EXISTS (" +
+            "   SELECT 1 FROM posts " +
+            "   WHERE user_id='69231c55-9851-11f0-b1b7-62517600596c' " +
+            "     AND content='Seed post 1'" +
+            ")";
 
-    if (!exec(sql, "seed admin posts")) return false;
+        if (!exec(sql, "seed admin post 1")) return false;
 
-     // ------------------ Analytics: Profile Views ------------------
+        sql =
+            "INSERT INTO posts (post_id, user_id, content) " +
+            "SELECT UUID(), '69231c55-9851-11f0-b1b7-62517600596c', 'Seed post 2' " +
+            "WHERE NOT EXISTS (" +
+            "   SELECT 1 FROM posts " +
+            "   WHERE user_id='69231c55-9851-11f0-b1b7-62517600596c' " +
+            "     AND content='Seed post 2'" +
+            ")";
+
+        if (!exec(sql, "seed admin post 2")) return false;
+
+        sql =
+            "INSERT INTO posts (post_id, user_id, content) " +
+            "SELECT UUID(), '69231c55-9851-11f0-b1b7-62517600596c', 'Seed post 3' " +
+            "WHERE NOT EXISTS (" +
+            "   SELECT 1 FROM posts " +
+            "   WHERE user_id='69231c55-9851-11f0-b1b7-62517600596c' " +
+            "     AND content='Seed post 3'" +
+            ")";
+
+        if (!exec(sql, "seed admin post 3")) return false;
+
+
+   // ------------------ Analytics: Profile Views (seed once) ------------------
     sql =
-        "INSERT INTO profile_views(pv_id, profile_owner_id, viewer_user_id, source) VALUES " +
-        "(UUID(), '69231c55-9851-11f0-b1b7-62517600596c', NULL, 'seed')," +
-        "(UUID(), '69231c55-9851-11f0-b1b7-62517600596c', NULL, 'seed')," +
-        "(UUID(), '69231c55-9851-11f0-b1b7-62517600596c', NULL, 'seed')," +
-        "(UUID(), '69231c55-9851-11f0-b1b7-62517600596c', NULL, 'seed')," +
-        "(UUID(), '69231c55-9851-11f0-b1b7-62517600596c', NULL, 'seed')";
+        "INSERT INTO profile_views (pv_id, profile_owner_id, viewer_user_id, source) " +
+        "SELECT UUID(), '69231c55-9851-11f0-b1b7-62517600596c', NULL, 'seed' " +
+        "FROM dual WHERE NOT EXISTS (" +
+        "   SELECT 1 FROM profile_views " +
+        "   WHERE profile_owner_id='69231c55-9851-11f0-b1b7-62517600596c' " +
+        "     AND source='seed'" +
+        ")";
 
     if (!exec(sql, "seed profile_views admin")) return false;
 
-    // ------------------ Analytics: Post Views (UUID-safe) ------------------
+    // ------------------ Analytics: Post Views (seed once) ------------------
     sql =
-        "INSERT INTO post_views(post_view_id, post_id, viewer_user_id, source) " +
+        "INSERT INTO post_views (post_view_id, post_id, viewer_user_id, source) " +
         "SELECT UUID(), p.post_id, NULL, 'seed' " +
         "FROM posts p " +
-        "WHERE p.user_id = '69231c55-9851-11f0-b1b7-62517600596c'";
+        "WHERE p.user_id='69231c55-9851-11f0-b1b7-62517600596c' " +
+        "AND NOT EXISTS (" +
+        "   SELECT 1 FROM post_views pv " +
+        "   WHERE pv.post_id=p.post_id AND pv.source='seed'" +
+        ")";
 
     if (!exec(sql, "seed post_views admin")) return false;
 
- 
+
       
     
     
@@ -156,73 +187,99 @@ public class DbSeeder {
     
     
     // ------------------ Companies ------------------
-         sql =
-        "INSERT INTO companies (" +
-        "company_id, name, logo_url, industry, location, website_url, description" +
-        ") VALUES " +
+    sql =
+        "INSERT INTO companies (company_id, name, logo_url, industry, location, website_url, description) " +
+        "SELECT UUID(), 'CD Project Red', 'cdpr.png', 'Game Development', 'Warsaw, Poland', " +
+        "'https://en.cdprojektred.com', 'AAA game development studio' " +
+        "WHERE NOT EXISTS (SELECT 1 FROM companies WHERE name='CD Project Red')";
 
-        "(" +
-        "UUID(), 'CD Project Red', 'cdpr.png', 'Game Development', 'Warsaw, Poland', " +
-        "'https://en.cdprojektred.com', 'AAA game development studio'" +
-        ")," +
+    if (!exec(sql, "seed company CDPR")) return false;
 
-        "(" +
-        "UUID(), 'Microsoft', 'microsoft.png', 'Technology', 'Redmond, USA', " +
-        "'https://www.microsoft.com', 'Global technology company'" +
-        ")," +
+    sql =
+        "INSERT INTO companies (company_id, name, logo_url, industry, location, website_url, description) " +
+        "SELECT UUID(), 'Microsoft', 'microsoft.png', 'Technology', 'Redmond, USA', " +
+        "'https://www.microsoft.com', 'Global technology company' " +
+        "WHERE NOT EXISTS (SELECT 1 FROM companies WHERE name='Microsoft')";
 
-        "(" +
-        "UUID(), 'Sony', 'sony.png', 'Electronics & Entertainment', 'Tokyo, Japan', " +
-        "'https://www.sony.com', 'Multinational conglomerate'" +
+    if (!exec(sql, "seed company Microsoft")) return false;
+
+    sql =
+        "INSERT INTO companies (company_id, name, logo_url, industry, location, website_url, description) " +
+        "SELECT UUID(), 'Sony', 'sony.png', 'Electronics & Entertainment', 'Tokyo, Japan', " +
+        "'https://www.sony.com', 'Multinational conglomerate' " +
+        "WHERE NOT EXISTS (SELECT 1 FROM companies WHERE name='Sony')";
+
+    if (!exec(sql, "seed company Sony")) return false;
+
+    // ------------------ Admin experiences ------------------
+    sql =
+        "INSERT INTO experiences (" +
+        "experience_id, user_id, company_id, position, employment_type, " +
+        "work_location_type, location, start_date, end_date, description" +
+        ") " +
+
+        // ===== CD Project Red =====
+        "SELECT UUID(), " +
+        "'69231c55-9851-11f0-b1b7-62517600596c', c.company_id, " +
+        "'Lead UI/UX Designer', 'Full-time', 'On-site', 'Warsaw, Poland', " +
+        "'2021-11-01', NULL, " +
+        "'Created and optimized responsive web and app interfaces.\n" +
+        "Led user testing and data-driven design iterations.\n" +
+        "Unified design language across products.\n" +
+        "Partnered with engineering teams for pixel-perfect designs.' " +
+        "FROM companies c " +
+        "WHERE c.name='CD Project Red' " +
+        "AND NOT EXISTS (" +
+        "   SELECT 1 FROM experiences e " +
+        "   WHERE e.user_id='69231c55-9851-11f0-b1b7-62517600596c' " +
+        "     AND e.company_id=c.company_id" +
         ")";
 
-         if (!exec(sql, "seed companies")) return false;
-
-         // ------------------ Admin experiences ------------------
-        sql =
-            "INSERT INTO experiences (" +
-            "experience_id, user_id, company_id, position, employment_type, " +
-            "work_location_type, location, start_date, end_date, description" +
-            ") " +
-
-            // ===== CD Project Red =====
-            "SELECT UUID(), " +
-            "'69231c55-9851-11f0-b1b7-62517600596c', c.company_id, " +
-            "'Lead UI/UX Designer', 'Full-time', 'On-site', 'Warsaw, Poland', " +
-            "'2021-11-01', NULL, " +
-            "'Created and optimized responsive web and app interfaces.\n" +
-            "Led user testing and data-driven design iterations.\n" +
-            "Unified design language across products.\n" +
-            "Partnered with engineering teams for pixel-perfect designs.'" +
-            " FROM companies c WHERE c.name = 'CD Project Red' " +
-
-            "UNION ALL " +
-
-            // ===== Microsoft =====
-            "SELECT UUID(), " +
-            "'69231c55-9851-11f0-b1b7-62517600596c', c.company_id, " +
-            "'Senior UI/UX Designer', 'Full-time', 'On-site', 'Redmond, USA', " +
-            "'2018-01-01', '2021-11-01', " +
-            "'Designed and launched user-friendly platforms.\n" +
-            "Conducted usability research and built scalable design systems.'" +
-            " FROM companies c WHERE c.name = 'Microsoft' " +
-
-            "UNION ALL " +
-
-            // ===== Sony =====
-            "SELECT UUID(), " +
-            "'69231c55-9851-11f0-b1b7-62517600596c', c.company_id, " +
-            "'UI/UX Designer', 'Part-time', 'Remote', 'Remote', " +
-            "'2016-12-01', '2018-10-01', " +
-            "'Designed intuitive web and mobile applications.\n" +
-            "Conducted user research and created wireframes and prototypes.'" +
-            " FROM companies c WHERE c.name = 'Sony'";
-
-        if (!exec(sql, "seed admin experiences")) return false;
+    if (!exec(sql, "seed experience CDPR")) return false;
 
 
+    // ------------------ Academies ------------------
+    sql =
+        "INSERT INTO academies (academy_id, name, logo_url, website_url) " +
+        "SELECT UUID(), " +
+        "'University of California, Los Angeles (UCLA)', " +
+        "'ucla.png', " +
+        "'https://www.ucla.edu' " +
+        "WHERE NOT EXISTS (" +
+        "   SELECT 1 FROM academies " +
+        "   WHERE name='University of California, Los Angeles (UCLA)'" +
+        ")";
 
+    if (!exec(sql, "seed academy UCLA")) return false;
 
+    // ------------------ Admin education ------------------
+       sql =
+           "INSERT INTO educations (" +
+           "education_id, user_id, academy_id, institution, degree, field_of_study, " +
+           "start_date, end_date, source" +
+           ") " +
+           "SELECT UUID(), " +
+           "'69231c55-9851-11f0-b1b7-62517600596c', " +
+           "a.academy_id, " +
+           "a.name, " +
+           "'Bachelor', " +
+           "'Computer Science', " +
+           "'2014-09-01', " +
+           "'2018-06-01', " +
+           "'seed' " +
+           "FROM academies a " +
+           "WHERE a.name='University of California, Los Angeles (UCLA)' " +
+           "AND NOT EXISTS (" +
+           "   SELECT 1 FROM educations e " +
+           "   WHERE e.user_id='69231c55-9851-11f0-b1b7-62517600596c' " +
+           "     AND e.institution=a.name" +
+           ")";
+
+       if (!exec(sql, "seed education UCLA")) return false;
+
+    
+    
+    
         return true;
     }
     

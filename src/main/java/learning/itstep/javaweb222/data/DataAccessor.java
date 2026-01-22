@@ -3,6 +3,7 @@ package learning.itstep.javaweb222.data;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.util.List;
+import java.util.UUID;
 
 import learning.itstep.javaweb222.data.core.DbInstaller;
 import learning.itstep.javaweb222.data.core.DbSeeder;
@@ -28,6 +29,7 @@ import learning.itstep.javaweb222.data.dto.Education;
 import learning.itstep.javaweb222.data.dto.Experience;
 import learning.itstep.javaweb222.data.dto.UserSkill;
 import learning.itstep.javaweb222.data.dto.UserLanguage;
+import learning.itstep.javaweb222.models.profile.EducationBlockModel;
 import learning.itstep.javaweb222.models.profile.ExperienceBlockModel;
 
 @Singleton
@@ -101,16 +103,27 @@ public class DataAccessor {
 
     // ================= PROFILE =================
 
-    public String getCompanyName(String companyId) {
-        return companyDao.getCompanyNameById(companyId);
+   
+    public void addExperience(String userId, Experience experience) throws Exception {
+        profileDao.addExperience(userId, experience);
     }
+
+    public UUID getOrCreateCompanyByName(String name, String ownerUserId) throws Exception {
+        return companyDao.getOrCreateCompanyByName(name, ownerUserId);
+    }
+
     public List<ExperienceBlockModel> getUserExperienceBlocks(String userId) {
         return profileDao.getExperienceBlocksByUser(userId);
     }
 
 
-    public List<Education> getUserEducations(String userId) {
-        return profileDao.getEducationsByUser(userId);
+    public List<EducationBlockModel> getUserEducations(String userId) {
+        return profileDao.getEducationBlocksByUser(userId);
+    }
+
+
+    public void addEducation(String userId, Education education) throws Exception {
+        profileDao.addEducation(userId, education);
     }
 
     public List<UserSkill> getUserSkills(String userId) {

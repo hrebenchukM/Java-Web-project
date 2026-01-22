@@ -13,7 +13,8 @@ public class RestStatus {
    public static final RestStatus status401 = new RestStatus(401,false,"UnAuthorized");
    public static final RestStatus status403 = new RestStatus(403,false,"Forbidden");
    public static final RestStatus status404 = new RestStatus(404,false,"Not Found");
-   
+   public static final RestStatus status405 = new RestStatus(405, false, "Method Not Allowed");
+
     public RestStatus(int code, boolean isOk, String phrase) {
         this.code = code;
         this.isOk = isOk;

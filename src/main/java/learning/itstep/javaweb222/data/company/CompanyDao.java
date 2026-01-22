@@ -5,6 +5,7 @@ import com.google.inject.Singleton;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import learning.itstep.javaweb222.data.core.DbProvider;
@@ -21,19 +22,36 @@ public class CompanyDao {
         this.logger = logger;
     }
 
-    public String getCompanyNameById(String companyId) {
-        String sql = "SELECT name FROM companies WHERE company_id = ?";
+    public UUID getOrCreateCompanyByName(String name, String ownerUserId) throws Exception {
+
+        String sql = "SELECT company_id FROM companies WHERE name = ?";
 
         try (PreparedStatement ps = db.getConnection().prepareStatement(sql)) {
-            ps.setString(1, companyId);
+            ps.setString(1, name);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
-                return rs.getString("name");
+                return UUID.fromString(rs.getString("company_id"));
             }
         }
-        catch (SQLException ex) {
-            logger.log(Level.WARNING, "CompanyDao::getCompanyNameById {0}", ex.getMessage());
+
+        UUID id = db.getDbIdentity();
+
+        sql = """
+            INSERT INTO companies (
+                company_id,
+                owner_user_id,
+                name,
+                created_at
+            ) VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+        """;
+
+        try (PreparedStatement ps = db.getConnection().prepareStatement(sql)) {
+            ps.setString(1, id.toString());
+            ps.setString(2, ownerUserId);
+            ps.setString(3, name);
+            ps.executeUpdate();
         }
-        return null;
+
+        return id;
     }
 }

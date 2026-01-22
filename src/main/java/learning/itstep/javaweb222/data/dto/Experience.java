@@ -3,7 +3,7 @@ package learning.itstep.javaweb222.data.dto;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.sql.Date;
+import java.util.Date;
 import java.util.UUID;
 
 public class Experience {
@@ -17,9 +17,9 @@ public class Experience {
     private Date startDate;
     private Date endDate;
     private String description;
-    private java.util.Date createdAt;
-    private java.util.Date updatedAt;
-    private java.util.Date deletedAt;
+    private Date createdAt;
+    private Date updatedAt;
+    private Date deletedAt;
 
     public static Experience fromResultSet(ResultSet rs) throws SQLException {
         Experience e = new Experience();

@@ -4,6 +4,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 public class Post {
@@ -19,6 +20,7 @@ public class Post {
     private Date deletedAt;
 
     private User user;
+    private List<Media> media;
 
     
 
@@ -50,6 +52,13 @@ public class Post {
         return p;
     }
     // getters / setters
+    public List<Media> getMedia() {
+        return media;
+    }
+
+    public void setMedia(List<Media> media) {
+        this.media = media;
+    }
 
     public UUID getId() {
         return id;

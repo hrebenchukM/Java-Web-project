@@ -17,12 +17,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import learning.itstep.javaweb222.data.core.DbProvider;
 import learning.itstep.javaweb222.data.dto.Academy;
+import learning.itstep.javaweb222.data.dto.Certificate;
 import learning.itstep.javaweb222.data.dto.Company;
 import learning.itstep.javaweb222.data.dto.Education;
 import learning.itstep.javaweb222.data.dto.Experience;
 import learning.itstep.javaweb222.data.dto.User;
 import learning.itstep.javaweb222.data.dto.UserLanguage;
 import learning.itstep.javaweb222.data.dto.UserSkill;
+import learning.itstep.javaweb222.models.profile.CertificateBlockModel;
 import learning.itstep.javaweb222.models.profile.EducationBlockModel;
 import learning.itstep.javaweb222.models.profile.ExperienceBlockModel;
 
@@ -259,30 +261,32 @@ public void addEducation(String userId, Education e) throws Exception {
 
     // ================== SKILLS ==================
 
-    public List<UserSkill> getSkillsByUser(String userId) {
-        String sql = """
-            SELECT us.*, s.name, s.description
-            FROM user_skills us
-            JOIN skills s ON us.skill_id = s.skill_id
-            WHERE us.user_id = ?
-            ORDER BY us.is_main DESC, us.order_index
-        """;
+    
+public List<UserSkill> getSkillsByUser(String userId) {
+    String sql = """
+        SELECT us.*, s.name, s.description
+        FROM user_skills us
+        JOIN skills s ON us.skill_id = s.skill_id
+        WHERE us.user_id = ?
+        ORDER BY us.is_main DESC, us.order_index
+    """;
 
-        List<UserSkill> res = new ArrayList<>();
-        try (PreparedStatement prep = db.getConnection().prepareStatement(sql)) {
-            prep.setString(1, userId);
-            ResultSet rs = prep.executeQuery();
-            while (rs.next()) {
-                res.add(UserSkill.fromResultSet(rs));
-            }
+    List<UserSkill> res = new ArrayList<>();
+    try (PreparedStatement prep = db.getConnection().prepareStatement(sql)) {
+        prep.setString(1, userId);
+        ResultSet rs = prep.executeQuery();
+        while (rs.next()) {
+            res.add(UserSkill.fromResultSet(rs));
         }
-        catch (SQLException ex) {
-            logger.log(Level.WARNING, "ProfileDao::getSkillsByUser {0}",
-                    ex.getMessage() + " | " + sql);
-        }
-        return res;
     }
-
+    catch (SQLException ex) {
+        logger.log(Level.WARNING,
+            "ProfileDao::getSkillsByUser {0}",
+            ex.getMessage() + " | " + sql
+        );
+    }
+    return res;
+}
     // ================== LANGUAGES ==================
 
     public List<UserLanguage> getLanguagesByUser(String userId) {
@@ -427,4 +431,267 @@ public void addEducation(String userId, Education e) throws Exception {
 
   
     
+    // ================== CERTIFICATES ==================
+
+public List<CertificateBlockModel> getCertificateBlocksByUser(String userId) {
+
+    String sql = """
+        SELECT
+            c.certificate_id,
+            c.user_id,
+            c.academy_id,
+            c.name,
+            c.download_ref,
+            c.issue_date,
+            c.expiry_date,
+            c.accreditation_id,
+            c.organization_url,
+            c.created_at,
+            c.updated_at,
+            c.deleted_at,
+
+            a.academy_id,
+            a.name,
+            a.logo_url,
+            a.website_url,
+            a.created_at,
+            a.updated_at
+
+        FROM certificates c
+        LEFT JOIN academies a ON c.academy_id = a.academy_id
+        WHERE c.user_id = ?
+          AND c.deleted_at IS NULL
+        ORDER BY c.issue_date DESC
+    """;
+
+        List<CertificateBlockModel> res = new ArrayList<>();
+
+        try (PreparedStatement ps = db.getConnection().prepareStatement(sql)) {
+            ps.setString(1, userId);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                CertificateBlockModel block = new CertificateBlockModel()
+                    .setCertificate(Certificate.fromResultSet(rs))
+                    .setAcademy(
+                        rs.getString("academy_id") == null
+                            ? null
+                            : Academy.fromResultSet(rs)
+                    );
+
+                res.add(block);
+            }
+        }
+        catch (SQLException ex) {
+            logger.log(Level.WARNING,
+                "ProfileDao::getCertificateBlocksByUser {0}",
+                ex.getMessage() + " | " + sql);
+        }
+
+        return res;
+    }
+
+    
+    public void addCertificate(String userId, Certificate c, String academyName) throws Exception {
+
+        UUID userGuid;
+        try {
+            userGuid = UUID.fromString(userId);
+        }
+        catch (Exception ex) {
+            throw new Exception("Invalid userId UUID");
+        }
+
+        // ===== get or create academy =====
+        UUID academyId = null;
+
+        if (academyName != null && !academyName.isBlank()) {
+
+            String findSql = "SELECT academy_id FROM academies WHERE name = ?";
+
+            try (PreparedStatement ps = db.getConnection().prepareStatement(findSql)) {
+                ps.setString(1, academyName);
+                ResultSet rs = ps.executeQuery();
+                if (rs.next()) {
+                    academyId = UUID.fromString(rs.getString("academy_id"));
+                }
+            }
+
+            if (academyId == null) {
+                String insertSql = """
+                    INSERT INTO academies (academy_id, name)
+                    VALUES (UUID(), ?)
+                """;
+
+                try (PreparedStatement ps = db.getConnection().prepareStatement(insertSql)) {
+                    ps.setString(1, academyName);
+                    ps.executeUpdate();
+                }
+
+                try (PreparedStatement ps = db.getConnection().prepareStatement(findSql)) {
+                    ps.setString(1, academyName);
+                    ResultSet rs = ps.executeQuery();
+                    if (rs.next()) {
+                        academyId = UUID.fromString(rs.getString("academy_id"));
+                    }
+                }
+            }
+        }
+
+        // ===== insert certificate =====
+        String sql = """
+            INSERT INTO certificates (
+                certificate_id,
+                user_id,
+                academy_id,
+                name,
+                download_ref,
+                issue_date,
+                expiry_date,
+                accreditation_id,
+                organization_url
+            ) VALUES (
+                UUID(), ?, ?, ?, ?, ?, ?, ?, ?
+            )
+        """;
+
+        try (PreparedStatement ps = db.getConnection().prepareStatement(sql)) {
+
+            ps.setString(1, userGuid.toString());
+
+            if (academyId != null)
+                ps.setString(2, academyId.toString());
+            else
+                ps.setNull(2, java.sql.Types.CHAR);
+
+            ps.setString(3, c.getName());
+            ps.setString(4, c.getDownloadRef());
+
+            ps.setDate(5,
+                c.getIssueDate() == null ? null :
+                new java.sql.Date(c.getIssueDate().getTime())
+            );
+
+            ps.setDate(6,
+                c.getExpiryDate() == null ? null :
+                new java.sql.Date(c.getExpiryDate().getTime())
+            );
+
+            ps.setString(7, c.getAccreditationId());
+            ps.setString(8, c.getOrganizationUrl());
+
+            ps.executeUpdate();
+        }
+    }
+
+    
+    
+    // ================== ADD SKILL ==================
+
+    
+public void addSkill(String userId, String skillName, String level, boolean isMain) throws Exception {
+
+    // ===== 1️⃣ validate userId =====
+    UUID userGuid;
+    try {
+        userGuid = UUID.fromString(userId);
+    }
+    catch (Exception ex) {
+        throw new Exception("Invalid userId UUID");
+    }
+
+    // ===== 2️⃣ find or create skill =====
+    UUID skillId = null;
+
+    String findSkillSql = "SELECT skill_id FROM skills WHERE name = ?";
+
+    try (PreparedStatement ps = db.getConnection().prepareStatement(findSkillSql)) {
+        ps.setString(1, skillName);
+        ResultSet rs = ps.executeQuery();
+        if (rs.next()) {
+            skillId = UUID.fromString(rs.getString("skill_id"));
+        }
+    }
+
+    if (skillId == null) {
+        String insertSkillSql = """
+            INSERT INTO skills (skill_id, name)
+            VALUES (UUID(), ?)
+        """;
+
+        try (PreparedStatement ps = db.getConnection().prepareStatement(insertSkillSql)) {
+            ps.setString(1, skillName);
+            ps.executeUpdate();
+        }
+
+        try (PreparedStatement ps = db.getConnection().prepareStatement(findSkillSql)) {
+            ps.setString(1, skillName);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                skillId = UUID.fromString(rs.getString("skill_id"));
+            }
+        }
+    }
+
+    if (skillId == null) {
+        throw new Exception("Skill creation failed");
+    }
+
+    // ===== 3️⃣ determine order_index =====
+    int nextOrderIndex = 1;
+
+    String orderSql = """
+        SELECT IFNULL(MAX(order_index), 0) + 1
+        FROM user_skills
+        WHERE user_id = ?
+    """;
+
+    try (PreparedStatement ps = db.getConnection().prepareStatement(orderSql)) {
+        ps.setString(1, userGuid.toString());
+        ResultSet rs = ps.executeQuery();
+        if (rs.next()) {
+            nextOrderIndex = rs.getInt(1);
+        }
+    }
+
+    // ===== 4️⃣ if main skill → unset previous =====
+    if (isMain) {
+        String resetMainSql = """
+            UPDATE user_skills
+            SET is_main = 0
+            WHERE user_id = ?
+              AND is_main = 1
+        """;
+
+        try (PreparedStatement ps = db.getConnection().prepareStatement(resetMainSql)) {
+            ps.setString(1, userGuid.toString());
+            ps.executeUpdate();
+        }
+    }
+
+    // ===== 5️⃣ insert user_skill =====
+    String insertUserSkillSql = """
+        INSERT INTO user_skills (
+            user_skill_id,
+            user_id,
+            skill_id,
+            level,
+            is_main,
+            order_index
+        ) VALUES (
+            UUID(), ?, ?, ?, ?, ?
+        )
+    """;
+
+    try (PreparedStatement ps = db.getConnection().prepareStatement(insertUserSkillSql)) {
+        ps.setString(1, userGuid.toString());
+        ps.setString(2, skillId.toString());
+        ps.setString(3, level);
+        ps.setBoolean(4, isMain);
+        ps.setInt(5, nextOrderIndex);
+        ps.executeUpdate();
+    }
+}
+
+
 }

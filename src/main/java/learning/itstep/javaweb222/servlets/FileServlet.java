@@ -20,7 +20,8 @@ import learning.itstep.javaweb222.services.storage.StorageService;
 public class FileServlet extends HttpServlet {
     private final StorageService storageService;
     private final List<String> allowedExtensions = Arrays.asList(
-            "jpeg", "png", "bmp", "webp", "gif");
+            "jpeg", "jpg", "png", "bmp", "webp", "gif", "pdf"
+    );
 
     @Inject
     public FileServlet(StorageService storageService) {
@@ -37,11 +38,15 @@ public class FileServlet extends HttpServlet {
             return;
         }
         
-        String ext = id.substring(dotIndex + 1);
+        //String ext = id.substring(dotIndex + 1);
+        String ext = id.substring(dotIndex + 1).toLowerCase();
         if(ext.equals("jpg")) {
             ext = "jpeg";
         }
-        if( allowedExtensions.contains(ext) ) {
+        if ("pdf".equals(ext)) {
+            resp.setContentType("application/pdf");
+        }
+        else if (allowedExtensions.contains(ext)) {
             resp.setContentType("image/" + ext);
         }
         else {
@@ -49,6 +54,7 @@ public class FileServlet extends HttpServlet {
             resp.getWriter().print("Type '" + ext + "' not supported");
             return;
         }
+
         try(InputStream rdr = storageService.getStream(id)) {            
             // piping - передача з потоку читання до потоку запису
             byte[] buf = new byte[8192];

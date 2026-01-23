@@ -932,6 +932,8 @@ public class DbInstaller {
             "event_attendees"
         )) return false;
 
+
+        
         return true;
     }
 

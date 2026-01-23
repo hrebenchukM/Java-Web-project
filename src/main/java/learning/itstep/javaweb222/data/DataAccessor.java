@@ -18,6 +18,7 @@ import learning.itstep.javaweb222.data.notification.NotificationDao;
 
 import learning.itstep.javaweb222.data.dto.AccessToken;
 import learning.itstep.javaweb222.data.dto.AuthCredential;
+import learning.itstep.javaweb222.data.dto.Certificate;
 import learning.itstep.javaweb222.data.dto.User;
 import learning.itstep.javaweb222.data.dto.Post;
 import learning.itstep.javaweb222.data.dto.Chat;
@@ -27,8 +28,10 @@ import learning.itstep.javaweb222.data.dto.MessageRead;
 import learning.itstep.javaweb222.data.dto.Notification;
 import learning.itstep.javaweb222.data.dto.Education;
 import learning.itstep.javaweb222.data.dto.Experience;
+import learning.itstep.javaweb222.data.dto.Skill;
 import learning.itstep.javaweb222.data.dto.UserSkill;
 import learning.itstep.javaweb222.data.dto.UserLanguage;
+import learning.itstep.javaweb222.models.profile.CertificateBlockModel;
 import learning.itstep.javaweb222.models.profile.EducationBlockModel;
 import learning.itstep.javaweb222.models.profile.ExperienceBlockModel;
 
@@ -130,11 +133,12 @@ public class DataAccessor {
         return profileDao.getSkillsByUser(userId);
     }
 
+
     public List<UserLanguage> getUserLanguages(String userId) {
         return profileDao.getLanguagesByUser(userId);
     }
 
-    // ================= POSTS =================
+// ================= POSTS =================
 
     public Post getPostById(String postId) {
         return postDao.getPostById(postId);
@@ -144,13 +148,27 @@ public class DataAccessor {
         return postDao.getFeed(page, perPage);
     }
 
+    public int getFeedCount() {
+        return postDao.getFeedCount();
+    }
+
     public List<Post> getUserPosts(String userId) {
         return postDao.getUserPosts(userId);
     }
 
-    public void addPost(Post post) {
-        postDao.addPost(post);
+    public int getUserPostsCount(String userId) {
+        return postDao.getUserPostsCount(userId);
     }
+
+    public Post addPost(Post post) {
+        return postDao.addPost(post);
+    }
+
+    public void deletePost(String postId) throws Exception {
+        postDao.deletePost(postId);
+    }
+
+
 
     // ================= CHATS =================
 
@@ -254,6 +272,26 @@ public class DataAccessor {
 
     public int getPostViewsCount(String userId) {
         return profileDao.getPostViewsCount(userId);
+    }
+
+    public List<CertificateBlockModel> getUserCertificates(String userId) {
+        return profileDao.getCertificateBlocksByUser(userId);
+    }
+
+    public void addCertificate(String userId, Certificate certificate, String academyName) throws Exception {
+        profileDao.addCertificate(userId, certificate, academyName);
+    }
+
+    // ================= PROFILE SKILLS =================
+
+
+    public void addSkill(
+        String userId,
+        String name,
+        String level,
+        boolean isMain
+    ) throws Exception {
+        profileDao.addSkill(userId, name, level, isMain);
     }
 
 }

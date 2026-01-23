@@ -152,7 +152,6 @@ public class DbSeeder {
 
         if (!exec(sql, "seed admin post 3")) return false;
 
-
    // ------------------ Analytics: Profile Views (seed once) ------------------
     sql =
         "INSERT INTO profile_views (pv_id, profile_owner_id, viewer_user_id, source) " +
@@ -277,11 +276,333 @@ public class DbSeeder {
 
        if (!exec(sql, "seed education UCLA")) return false;
 
+    // ------------------ Academies: Certificates ------------------
+    sql =
+        "INSERT INTO academies (academy_id, name, logo_url, website_url) " +
+        "SELECT UUID(), 'Creolab Design Courses', 'creolab.png', 'https://creolab.io' " +
+        "WHERE NOT EXISTS (SELECT 1 FROM academies WHERE name='Creolab Design Courses')";
+
+    if (!exec(sql, "seed academy Creolab")) return false;
+
+    sql =
+        "INSERT INTO academies (academy_id, name, logo_url, website_url) " +
+        "SELECT UUID(), 'Cybergenia IT Academy', 'cybergenia.png', 'https://cybergenia.com' " +
+        "WHERE NOT EXISTS (SELECT 1 FROM academies WHERE name='Cybergenia IT Academy')";
+
+    if (!exec(sql, "seed academy Cybergenia")) return false;
+
     
+    sql =
+        "INSERT INTO certificates (" +
+        "certificate_id, user_id, academy_id, name, download_ref, issue_date, expiry_date" +
+        ") " +
+        "SELECT UUID(), " +
+        "'69231c55-9851-11f0-b1b7-62517600596c', " +
+        "a.academy_id, " +
+        "'UI/UX Designer Certificate', " +
+        "'d752710b-e2d3-49f5-862c-983635d6c4b8.pdf', " +
+        "'2019-08-01', " +
+        "'2020-08-01' " +
+        "FROM academies a " +
+        "WHERE a.name='Creolab Design Courses' " +
+        "AND NOT EXISTS (" +
+        "   SELECT 1 FROM certificates c " +
+        "   WHERE c.user_id='69231c55-9851-11f0-b1b7-62517600596c' " +
+        "     AND c.name='UI/UX Designer Certificate'" +
+        ")";
+
+         if (!exec(sql, "seed certificate Creolab UI/UX")) return false;
+
+         sql =
+        "INSERT INTO certificates (" +
+        "certificate_id, user_id, academy_id, name, download_ref, issue_date, expiry_date" +
+        ") " +
+        "SELECT UUID(), " +
+        "'69231c55-9851-11f0-b1b7-62517600596c', " +
+        "a.academy_id, " +
+        "'User Experience Specialist', " +
+        "'d752710b-e2d3-49f5-862c-983635d6c4b8.pdf', " +
+        "'2017-11-01', " +
+        "'2018-11-01' " +
+        "FROM academies a " +
+        "WHERE a.name='Cybergenia IT Academy' " +
+        "AND NOT EXISTS (" +
+        "   SELECT 1 FROM certificates c " +
+        "   WHERE c.user_id='69231c55-9851-11f0-b1b7-62517600596c' " +
+        "     AND c.name='User Experience Specialist'" +
+        ")";
+
+    if (!exec(sql, "seed certificate Cybergenia UX")) return false;
+
+
+            // ------------------ Skills: Global ------------------
+        sql =
+            "INSERT INTO skills (skill_id, name) " +
+            "SELECT UUID(), 'Communication skills' " +
+            "WHERE NOT EXISTS (SELECT 1 FROM skills WHERE name='Communication skills')";
+        if (!exec(sql, "seed skill Communication")) return false;
+
+        sql =
+            "INSERT INTO skills (skill_id, name) " +
+            "SELECT UUID(), 'Technical skills' " +
+            "WHERE NOT EXISTS (SELECT 1 FROM skills WHERE name='Technical skills')";
+        if (!exec(sql, "seed skill Technical")) return false;
+
+        sql =
+            "INSERT INTO skills (skill_id, name) " +
+            "SELECT UUID(), 'UI/UX Design' " +
+            "WHERE NOT EXISTS (SELECT 1 FROM skills WHERE name='UI/UX Design')";
+        if (!exec(sql, "seed skill UIUX")) return false;
+
+        sql =
+            "INSERT INTO skills (skill_id, name) " +
+            "SELECT UUID(), 'Figma' " +
+            "WHERE NOT EXISTS (SELECT 1 FROM skills WHERE name='Figma')";
+        if (!exec(sql, "seed skill Figma")) return false;
+
+        
+        // ------------------ User Skills ------------------
+        sql =
+            "INSERT INTO user_skills (user_skill_id, user_id, skill_id, level, is_main, order_index) " +
+            "SELECT UUID(), " +
+            "'69231c55-9851-11f0-b1b7-62517600596c', s.skill_id, " +
+            "'advanced', 1, 1 " +
+            "FROM skills s " +
+            "WHERE s.name='Communication skills' " +
+            "AND NOT EXISTS (" +
+            "   SELECT 1 FROM user_skills us " +
+            "   WHERE us.user_id='69231c55-9851-11f0-b1b7-62517600596c' " +
+            "     AND us.skill_id=s.skill_id" +
+            ")";
+        if (!exec(sql, "seed user skill Communication")) return false;
+
+        sql =
+            "INSERT INTO user_skills (user_skill_id, user_id, skill_id, level, is_main, order_index) " +
+            "SELECT UUID(), " +
+            "'69231c55-9851-11f0-b1b7-62517600596c', s.skill_id, " +
+            "'intermediate', 0, 2 " +
+            "FROM skills s " +
+            "WHERE s.name='Technical skills' " +
+            "AND NOT EXISTS (" +
+            "   SELECT 1 FROM user_skills us " +
+            "   WHERE us.user_id='69231c55-9851-11f0-b1b7-62517600596c' " +
+            "     AND us.skill_id=s.skill_id" +
+            ")";
+        if (!exec(sql, "seed user skill Technical")) return false;
+
+        
+        
+        
+        
+        // ------------------ User: Designer ------------------
+sql =
+    "INSERT INTO users (" +
+    "user_id, email, first_name, second_name, avatar_url, profile_title, location, auth_provider" +
+    ") VALUES (" +
+    "'7a9f1c21-9851-11f0-b1b7-62517600596c'," +
+    "'designer@demo.com'," +
+    "'Emma'," +
+    "'Stone'," +
+    "'emma.jpg'," +
+    "'Junior UI/UX Designer'," +
+    "'Berlin, Germany'," +
+    "'local'" +
+    ") ON DUPLICATE KEY UPDATE email=VALUES(email)";
+
+if (!exec(sql, "seed user designer")) return false;
+
+       String salt1 = "designer";
+String pass1 = kdf.dk("designer", salt1);
+
+sql =
+    "INSERT INTO auth_credentials (" +
+    "auth_id, user_id, role_id, login, salt, password_hash, auth_provider" +
+    ") VALUES (" +
+     "'7a9f9f44-9852-11f0-b1b7-62517600596c'," +
+    "'7a9f1c21-9851-11f0-b1b7-62517600596c'," +
+    "'guest'," +
+    "'designer'," +
+    "'" + salt1 + "'," +
+    "'" + pass1 + "'," +
+    "'local'" +
+    ") ON DUPLICATE KEY UPDATE login=VALUES(login)";
+
+if (!exec(sql, "seed auth designer")) return false;
+ 
+        
+        // ------------------ User: Developer ------------------
+sql =
+    "INSERT INTO users (" +
+    "user_id, email, first_name, second_name, avatar_url, profile_title, location, auth_provider" +
+    ") VALUES (" +
+    "'8c21d9a2-9851-11f0-b1b7-62517600596c'," +
+    "'dev@demo.com'," +
+    "'Lucas'," +
+    "'Brown'," +
+    "'lucas.jpg'," +
+    "'Frontend Developer'," +
+    "'Amsterdam, Netherlands'," +
+    "'local'" +
+    ") ON DUPLICATE KEY UPDATE email=VALUES(email)";
+
+if (!exec(sql, "seed user developer")) return false;
+
+    String salt2 = "dev";
+String pass2 = kdf.dk("dev", salt2);
+
+sql =
+    "INSERT INTO auth_credentials (" +
+    "auth_id, user_id, role_id, login, salt, password_hash, auth_provider" +
+    ") VALUES (" +
+    "'8c220f13-9852-11f0-b1b7-62517600596c'," +
+    "'8c21d9a2-9851-11f0-b1b7-62517600596c'," +
+    "'guest'," +
+    "'dev'," +
+    "'" + salt2 + "'," +
+    "'" + pass2 + "'," +
+    "'local'" +
+    ") ON DUPLICATE KEY UPDATE login=VALUES(login)";
+
+if (!exec(sql, "seed auth developer")) return false;
     
-    
+// ------------------ Post: Designer ------------------
+sql =
+    "INSERT INTO posts (post_id, user_id, content) " +
+    "SELECT UUID(), '7a9f1c21-9851-11f0-b1b7-62517600596c', " +
+    "'Design is not just what it looks like. Design is how it works. – Steve Jobs' " +
+    "WHERE NOT EXISTS (" +
+    "   SELECT 1 FROM posts " +
+    "   WHERE user_id='7a9f1c21-9851-11f0-b1b7-62517600596c'" +
+    ")";
+
+if (!exec(sql, "seed post designer")) return false;
+
+        
+// ------------------ Post: Developer ------------------
+sql =
+    "INSERT INTO posts (post_id, user_id, content) " +
+    "SELECT UUID(), '8c21d9a2-9851-11f0-b1b7-62517600596c', " +
+    "'Clean code always looks like it was written by someone who cares.' " +
+    "WHERE NOT EXISTS (" +
+    "   SELECT 1 FROM posts " +
+    "   WHERE user_id='8c21d9a2-9851-11f0-b1b7-62517600596c'" +
+    ")";
+
+if (!exec(sql, "seed post developer")) return false;
+
+
+
+
+// ------------------ Media: Posts ------------------
+sql =
+    "INSERT INTO media (media_id, url, type) " +
+    "SELECT 'b3333c55-9853-11f0-b1b7-62517600596c', 'post_designer_1.jpg', 'image' " +
+    "WHERE NOT EXISTS (" +
+    "   SELECT 1 FROM media WHERE url='post_designer_1.jpg'" +
+    ")";
+
+if (!exec(sql, "seed media designer post")) return false;
+
+sql =
+    "INSERT INTO media (media_id, url, type) " +
+    "SELECT 'b4444c55-9853-11f0-b1b7-62517600596c', 'post_developer_1.jpg', 'image' " +
+    "WHERE NOT EXISTS (" +
+    "   SELECT 1 FROM media WHERE url='post_developer_1.jpg'" +
+    ")";
+
+if (!exec(sql, "seed media developer post")) return false;
+
+
+sql =
+    "INSERT INTO media (media_id, url, type) " +
+    "SELECT 'b5555c55-9853-11f0-b1b7-62517600596c', 'post_admin_3.jpg', 'image' " +
+    "WHERE NOT EXISTS (" +
+    "   SELECT 1 FROM media WHERE url='post_admin_3.jpg'" +
+    ")";
+
+if (!exec(sql, "seed media admin post 3")) return false;
+
+sql =
+    "INSERT INTO media (media_id, url, type) " +
+    "SELECT 'b1111c55-9853-11f0-b1b7-62517600596c', 'post_admin_1.jpg', 'image' " +
+    "WHERE NOT EXISTS (" +
+    "   SELECT 1 FROM media WHERE url='post_admin_1.jpg'" +
+    ")";
+
+if (!exec(sql, "seed media admin post 1")) return false;
+
+sql =
+    "INSERT INTO media (media_id, url, type) " +
+    "SELECT 'b2222c55-9853-11f0-b1b7-62517600596c', 'post_admin_2.jpg', 'image' " +
+    "WHERE NOT EXISTS (" +
+    "   SELECT 1 FROM media WHERE url='post_admin_2.jpg'" +
+    ")";
+
+if (!exec(sql, "seed media admin post 2")) return false;
+
+
+
+
+        // ------------------ PostMedia: Admin posts ------------------
+sql =
+    "INSERT INTO post_media (post_media_id, post_id, media_id) " +
+    "SELECT UUID(), p.post_id, 'b1111c55-9853-11f0-b1b7-62517600596c' " +
+    "FROM posts p " +
+    "WHERE p.user_id='69231c55-9851-11f0-b1b7-62517600596c' " +
+    "  AND p.content='Seed post 1' " +
+    "  AND NOT EXISTS (" +
+    "      SELECT 1 FROM post_media pm WHERE pm.post_id=p.post_id" +
+    "  )";
+
+if (!exec(sql, "seed post_media admin post 1")) return false;
+
+sql =
+    "INSERT INTO post_media (post_media_id, post_id, media_id) " +
+    "SELECT UUID(), p.post_id, 'b2222c55-9853-11f0-b1b7-62517600596c' " +
+    "FROM posts p " +
+    "WHERE p.user_id='69231c55-9851-11f0-b1b7-62517600596c' " +
+    "  AND p.content='Seed post 2' " +
+    "  AND NOT EXISTS (" +
+    "      SELECT 1 FROM post_media pm WHERE pm.post_id=p.post_id" +
+    "  )";
+
+if (!exec(sql, "seed post_media admin post 2")) return false;
+
+
+// ------------------ PostMedia: Designer ------------------
+sql =
+    "INSERT INTO post_media (post_media_id, post_id, media_id) " +
+    "SELECT UUID(), p.post_id, 'b3333c55-9853-11f0-b1b7-62517600596c' " +
+    "FROM posts p " +
+    "WHERE p.user_id='7a9f1c21-9851-11f0-b1b7-62517600596c' " +
+    "  AND NOT EXISTS (" +
+    "      SELECT 1 FROM post_media pm WHERE pm.post_id=p.post_id" +
+    "  )";
+
+if (!exec(sql, "seed post_media designer")) return false;
+
+// ------------------ PostMedia: Developer ------------------
+sql =
+    "INSERT INTO post_media (post_media_id, post_id, media_id) " +
+    "SELECT UUID(), p.post_id, 'b4444c55-9853-11f0-b1b7-62517600596c' " +
+    "FROM posts p " +
+    "WHERE p.user_id='8c21d9a2-9851-11f0-b1b7-62517600596c' " +
+    "  AND NOT EXISTS (" +
+    "      SELECT 1 FROM post_media pm WHERE pm.post_id=p.post_id" +
+    "  )";
+
+if (!exec(sql, "seed post_media developer")) return false;
+
+
+
+
+
+
+
         return true;
     }
+    
+    
     
     
 }

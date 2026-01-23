@@ -18,6 +18,7 @@ import java.util.UUID;
 import learning.itstep.javaweb222.data.DataAccessor;
 import learning.itstep.javaweb222.data.dto.AccessToken;
 import learning.itstep.javaweb222.data.dto.AuthCredential;
+import learning.itstep.javaweb222.data.dto.Certificate;
 import learning.itstep.javaweb222.data.dto.Education;
 import learning.itstep.javaweb222.data.dto.Experience;
 import learning.itstep.javaweb222.data.jwt.JwtToken;
@@ -26,6 +27,13 @@ import learning.itstep.javaweb222.rest.RestMeta;
 import learning.itstep.javaweb222.rest.RestResponse;
 import learning.itstep.javaweb222.rest.RestStatus;
 import learning.itstep.javaweb222.services.Signature.SignatureService;
+import learning.itstep.javaweb222.services.form.FormParseService;
+import learning.itstep.javaweb222.services.form.FormParseResult;
+import learning.itstep.javaweb222.services.form.FormParseException;
+import learning.itstep.javaweb222.services.storage.StorageService;
+import org.apache.commons.fileupload2.core.FileItem;
+
+
 
 @Singleton
 public class UserServlet extends HttpServlet {
@@ -33,15 +41,25 @@ public class UserServlet extends HttpServlet {
     private final DataAccessor dataAccessor;
     private final SignatureService signatureService;
 
+    private final FormParseService formParseService;
+    private final StorageService storageService;
+    
     private final Gson gson = new GsonBuilder().serializeNulls().create();
 
     private RestResponse restResponse;
     private JwtToken jwtToken;
 
     @Inject
-    public UserServlet(DataAccessor dataAccessor, SignatureService signatureService) {
+    public UserServlet(
+        DataAccessor dataAccessor,
+        SignatureService signatureService,
+        FormParseService formParseService,
+        StorageService storageService
+    ) {
         this.dataAccessor = dataAccessor;
         this.signatureService = signatureService;
+        this.formParseService = formParseService;
+        this.storageService = storageService;
     }
 
     // ======================== SERVICE ========================
@@ -62,7 +80,12 @@ public class UserServlet extends HttpServlet {
                     Map.entry("experience-list", "GET /user/experience"),
                     Map.entry("experience-add", "POST /user/experience"),
                     Map.entry("education-list", "GET /user/education"),
-                    Map.entry("education-add", "POST /user/education")
+                    Map.entry("education-add", "POST /user/education"),
+                    Map.entry("certificate-list", "GET /user/certificates"),
+                    Map.entry("certificate-add", "POST /user/certificates"),
+                    Map.entry("skills-list", "GET /user/skills"),
+                    Map.entry("skills-add", "POST /user/skills")
+
 
                 ))
 
@@ -115,6 +138,14 @@ public class UserServlet extends HttpServlet {
                 educationGet();
                 break;
 
+            case "/certificates":
+                certificatesGet();
+                break;
+
+            case "/skills":
+                skillsGet();
+                break;
+
             default:
                 restResponse.setStatus(RestStatus.status404);
                 restResponse.setData("Path not found: " + path);
@@ -134,12 +165,75 @@ public class UserServlet extends HttpServlet {
         else if ("/education".equals(path)) {
             educationPost(req);
         }
+        else if ("/certificates".equals(path)) {
+            certificatesPost(req);
+        }
+        else if ("/skills".equals(path)) {
+            skillsPost(req);
+        }
+
+
         else {
             restResponse.setStatus(RestStatus.status405);
             restResponse.setData("POST not allowed for " + path);
         }
     }
     
+    private void certificatesPost(HttpServletRequest req) {
+        try {
+            // 🔹 multipart/form-data
+            FormParseResult res = formParseService.parse(req);
+
+            Map<String, String> fields = res.getFields();
+            FileItem file = res.getFiles().values().stream().findFirst().orElse(null);
+
+            Certificate cert = new Certificate();
+
+            cert.setName(fields.get("name"));
+            cert.setAccreditationId(fields.get("accreditationId"));
+            cert.setOrganizationUrl(fields.get("organizationUrl"));
+
+            if (fields.get("issueDate") != null) {
+                cert.setIssueDate(
+                    java.sql.Date.valueOf(fields.get("issueDate"))
+                );
+            }
+
+            if (fields.get("expiryDate") != null) {
+                cert.setExpiryDate(
+                    java.sql.Date.valueOf(fields.get("expiryDate"))
+                );
+            }
+
+            // 🔹 PDF upload
+            if (file != null) {
+                cert.setDownloadRef(
+                    storageService.save(file)
+                );
+            }
+
+            String academyName = fields.get("academyName");
+
+            dataAccessor.addCertificate(
+                jwtToken.getPayload().getSub(),
+                cert,
+                academyName
+            );
+
+            restResponse.setData("Certificate added");
+            restResponse.getMeta().setDataType("string");
+        }
+        catch (FormParseException ex) {
+            restResponse.setStatus(RestStatus.status400);
+            restResponse.setData(ex.getMessage());
+        }
+        catch (Exception ex) {
+            restResponse.setStatus(RestStatus.status400);
+            restResponse.setData(ex.getMessage());
+        }
+    }
+
+
     private void educationPost(HttpServletRequest req) {
         try {
             Education edu = gson.fromJson(req.getReader(), Education.class);
@@ -189,6 +283,29 @@ public class UserServlet extends HttpServlet {
              restResponse.setData(ex.getMessage());
          }
      }
+    private void skillsPost(HttpServletRequest req) {
+        try {
+            JsonObject body = gson.fromJson(req.getReader(), JsonObject.class);
+
+            String name = body.get("name").getAsString();
+            String level = body.has("level") ? body.get("level").getAsString() : null;
+            boolean isMain = body.has("isMain") && body.get("isMain").getAsBoolean();
+
+            dataAccessor.addSkill(
+                jwtToken.getPayload().getSub(),
+                name,
+                level,
+                isMain
+            );
+
+            restResponse.setData("Skill added");
+            restResponse.getMeta().setDataType("string");
+        }
+        catch (Exception ex) {
+            restResponse.setStatus(RestStatus.status400);
+            restResponse.setData(ex.getMessage());
+        }
+    }
 
 
 
@@ -265,6 +382,23 @@ public class UserServlet extends HttpServlet {
         );
         restResponse.getMeta().setDataType("array");
     }
+    private void certificatesGet() {
+        restResponse.setData(
+            dataAccessor.getUserCertificates(
+                jwtToken.getPayload().getSub()
+            )
+        );
+        restResponse.getMeta().setDataType("array");
+    }
+    private void skillsGet() {
+        restResponse.setData(
+            dataAccessor.getUserSkills(
+                jwtToken.getPayload().getSub()
+            )
+        );
+        restResponse.getMeta().setDataType("array");
+    }
+
 
     // ======================== AUTH ========================
     private void authenticate(HttpServletRequest req) throws ServletException, IOException {

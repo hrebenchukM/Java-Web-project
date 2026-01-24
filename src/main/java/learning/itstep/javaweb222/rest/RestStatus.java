@@ -8,12 +8,21 @@ public class RestStatus {
    private boolean isOk;
    private String phrase;
 
-   public static final RestStatus status200 = new RestStatus(200,true,"OK");
-   public static final RestStatus status400 = new RestStatus(400,false,"Bad request");
-   public static final RestStatus status401 = new RestStatus(401,false,"UnAuthorized");
-   public static final RestStatus status403 = new RestStatus(403,false,"Forbidden");
-   public static final RestStatus status404 = new RestStatus(404,false,"Not Found");
-   public static final RestStatus status405 = new RestStatus(405, false, "Method Not Allowed");
+ // ================= SUCCESS =================
+    public static final RestStatus status200 = new RestStatus(200, true, "OK");
+    public static final RestStatus status201 = new RestStatus(201, true, "Created");
+    public static final RestStatus status204 = new RestStatus(204, true, "No Content");
+
+    // ================= CLIENT ERRORS =================
+    public static final RestStatus status400 = new RestStatus(400, false, "Bad Request");
+    public static final RestStatus status401 = new RestStatus(401, false, "Unauthorized");
+    public static final RestStatus status403 = new RestStatus(403, false, "Forbidden");
+    public static final RestStatus status404 = new RestStatus(404, false, "Not Found");
+    public static final RestStatus status405 = new RestStatus(405, false, "Method Not Allowed");
+    public static final RestStatus status409 = new RestStatus(409, false, "Conflict");
+
+    // ================= SERVER ERRORS =================
+    public static final RestStatus status500 = new RestStatus(500, false, "Internal Server Error");
 
     public RestStatus(int code, boolean isOk, String phrase) {
         this.code = code;

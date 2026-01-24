@@ -21,6 +21,8 @@ public class ServletsConfig extends ServletModule {
         serve("/post/*" ).with(PostServlet.class );
         serve("/user"   ).with(UserServlet.class   );
         serve("/user/*" ).with(UserServlet.class   );
+        serve("/vacancy"   ).with(VacancyServlet.class   );
+        serve("/vacancy/*" ).with(VacancyServlet.class   );
     }
     
 }

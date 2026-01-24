@@ -271,4 +271,23 @@ public class PostDao {
             throw ex;
         }
     }
+    public void attachMedia(UUID postId, UUID mediaId) {
+
+    String sql =
+        "INSERT INTO post_media (post_media_id, post_id, media_id) " +
+        "VALUES (?, ?, ?)";
+
+    try (PreparedStatement prep = db.getConnection().prepareStatement(sql)) {
+        prep.setString(1, db.getDbIdentity().toString());
+        prep.setString(2, postId.toString());
+        prep.setString(3, mediaId.toString());
+        prep.executeUpdate();
+    }
+    catch (SQLException ex) {
+        logger.log(Level.WARNING, "PostDao::attachMedia {0}",
+                ex.getMessage() + " | " + sql);
+        throw new RuntimeException(ex.getMessage());
+    }
+}
+
 }

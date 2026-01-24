@@ -134,7 +134,7 @@ public class Education {
         return this;
     }
 
-    public java.util.Date getCreatedAt() {
+    public Date getCreatedAt() {
         return createdAt;
     }
 
@@ -143,7 +143,7 @@ public class Education {
         return this;
     }
 
-    public java.util.Date getUpdatedAt() {
+    public Date getUpdatedAt() {
         return updatedAt;
     }
 
@@ -152,7 +152,7 @@ public class Education {
         return this;
     }
 
-    public java.util.Date getDeletedAt() {
+    public Date getDeletedAt() {
         return deletedAt;
     }
 

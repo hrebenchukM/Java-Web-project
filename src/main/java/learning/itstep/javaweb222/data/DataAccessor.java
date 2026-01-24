@@ -28,9 +28,13 @@ import learning.itstep.javaweb222.data.dto.MessageRead;
 import learning.itstep.javaweb222.data.dto.Notification;
 import learning.itstep.javaweb222.data.dto.Education;
 import learning.itstep.javaweb222.data.dto.Experience;
+import learning.itstep.javaweb222.data.dto.Media;
 import learning.itstep.javaweb222.data.dto.Skill;
 import learning.itstep.javaweb222.data.dto.UserSkill;
 import learning.itstep.javaweb222.data.dto.UserLanguage;
+import learning.itstep.javaweb222.data.dto.Vacancy;
+import learning.itstep.javaweb222.data.media.MediaDao;
+import learning.itstep.javaweb222.data.vacancy.VacancyDao;
 import learning.itstep.javaweb222.models.profile.CertificateBlockModel;
 import learning.itstep.javaweb222.models.profile.EducationBlockModel;
 import learning.itstep.javaweb222.models.profile.ExperienceBlockModel;
@@ -47,9 +51,12 @@ public class DataAccessor {
     private final ChatDao chatDao;
     private final MessageDao messageDao;
     private final NotificationDao notificationDao;
-    private CompanyDao companyDao;
+    private final CompanyDao companyDao;
+    private final VacancyDao vacancyDao;
+    private final MediaDao  mediaDao;
+
     
-    @Inject
+  @Inject
     public DataAccessor(
             DbSeeder dbSeeder,
             DbInstaller dbInstaller,
@@ -59,7 +66,9 @@ public class DataAccessor {
             ChatDao chatDao,
             MessageDao messageDao,
             NotificationDao notificationDao,
-            CompanyDao companyDao
+            CompanyDao companyDao,
+            VacancyDao vacancyDao,
+            MediaDao mediaDao
     ) {
         this.dbSeeder = dbSeeder;
         this.dbInstaller = dbInstaller;
@@ -70,7 +79,10 @@ public class DataAccessor {
         this.messageDao = messageDao;
         this.notificationDao = notificationDao;
         this.companyDao = companyDao;
+        this.vacancyDao = vacancyDao;
+        this.mediaDao = mediaDao;
     }
+
 
     // ================= INSTALL / SEED =================
 
@@ -103,6 +115,45 @@ public class DataAccessor {
     ) {
         return userDao.createAccessToken(ua, userAgent, ip);
     }
+
+  // ================= VACANCIES =================
+
+public List<Vacancy> getVacancies() {
+    return vacancyDao.getAllWithCompany();
+}
+
+public List<Vacancy> getBestVacancies(int limit) {
+    return vacancyDao.getBestWithCompany(limit);
+}
+
+public void addVacancy(
+        String userId,
+        String companyName,
+        Vacancy vacancy
+) throws Exception {
+
+    UUID companyId = companyDao.getOrCreateCompanyByName(
+            companyName,
+            userId
+    );
+
+    vacancy
+        .setCompanyId(companyId)
+        .setPostedBy(UUID.fromString(userId));
+
+    vacancyDao.addVacancy(vacancy);
+}
+
+
+
+public void attachMediaToPost(UUID postId, String fileName, String type) {
+    Media media = new Media()
+        .setUrl(fileName)
+        .setType(type);
+
+    UUID mediaId = mediaDao.addMedia(media);
+    postDao.attachMedia(postId, mediaId);
+}
 
     // ================= PROFILE =================
 

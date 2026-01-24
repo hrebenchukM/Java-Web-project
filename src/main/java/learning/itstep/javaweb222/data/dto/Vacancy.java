@@ -22,6 +22,9 @@ public class Vacancy {
     private Date updatedAt;
     private Date deletedAt;
 
+    
+    private Company company;
+      
     public static Vacancy fromResultSet(ResultSet rs) throws SQLException {
         Vacancy v = new Vacancy();
         v.setId(UUID.fromString(rs.getString("vacancy_id")));
@@ -46,11 +49,20 @@ public class Vacancy {
         ts = rs.getTimestamp("deleted_at");
         if (ts != null) v.setDeletedAt(new Date(ts.getTime()));
 
+        v.setCompany(Company.fromResultSet(rs));
         return v;
     }
 
        // getters / setters
 
+     public Company getCompany() {
+        return company;
+    }
+
+    public Vacancy setCompany(Company company) {
+        this.company = company;
+        return this;
+    }
     public UUID getId() {
         return id;
     }

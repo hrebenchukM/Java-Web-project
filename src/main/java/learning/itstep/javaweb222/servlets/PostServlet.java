@@ -2,38 +2,46 @@ package learning.itstep.javaweb222.servlets;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
 import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
-
 import static java.lang.Math.ceil;
-
+import org.apache.commons.fileupload2.core.FileItem;
 import learning.itstep.javaweb222.data.DataAccessor;
 import learning.itstep.javaweb222.data.dto.Post;
 import learning.itstep.javaweb222.data.jwt.JwtToken;
 import learning.itstep.javaweb222.rest.*;
+import learning.itstep.javaweb222.services.form.FormParseException;
+import learning.itstep.javaweb222.services.form.FormParseResult;
+import learning.itstep.javaweb222.services.form.FormParseService;
+import learning.itstep.javaweb222.services.storage.StorageService;
 
 @Singleton
 public class PostServlet extends HttpServlet {
 
     private final DataAccessor dataAccessor;
+    private final FormParseService formParseService;
     private final Gson gson = new GsonBuilder().serializeNulls().create();
+    private final StorageService storageService;
 
     private RestResponse restResponse;
     private JwtToken jwtToken;
 
     @Inject
-    public PostServlet(DataAccessor dataAccessor) {
+    public PostServlet(
+            DataAccessor dataAccessor,
+            FormParseService formParseService,
+            StorageService storageService
+    ) {
         this.dataAccessor = dataAccessor;
+        this.formParseService = formParseService;
+        this.storageService = storageService;
     }
 
     // ======================== SERVICE ========================
@@ -50,7 +58,7 @@ public class PostServlet extends HttpServlet {
                 .setLinks(Map.ofEntries(
                     Map.entry("feed", "/post"),
                     Map.entry("post", "/post/{id}"),
-                    Map.entry("create", "/post")
+                    Map.entry("create", "POST /post")
                 ))
         );
 
@@ -59,11 +67,11 @@ public class PostServlet extends HttpServlet {
         String path = req.getPathInfo();
         boolean isRoot = path == null || path.isBlank() || "/".equals(path);
 
-        // 🔹 GET /post — публичный feed
+        // GET /post — публичный
         if ("GET".equals(req.getMethod()) && isRoot) {
             super.service(req, resp);
         }
-        // 🔹 POST /post — ТОЛЬКО с JWT
+        // POST /post — только с JWT
         else if ("POST".equals(req.getMethod()) && isRoot) {
             if (jwtToken == null) {
                 restResponse.setStatus(RestStatus.status401);
@@ -72,7 +80,7 @@ public class PostServlet extends HttpServlet {
                 super.service(req, resp);
             }
         }
-        // 🔹 всё остальное — требует JWT
+        // остальное — требует JWT
         else if (jwtToken == null) {
             restResponse.setStatus(RestStatus.status401);
             restResponse.setData("JWT required");
@@ -101,7 +109,8 @@ public class PostServlet extends HttpServlet {
                 try {
                     perPage = Integer.parseInt(perPageParam);
                     if (perPage < 1) throw new NumberFormatException();
-                } catch (NumberFormatException ex) {
+                }
+                catch (NumberFormatException ex) {
                     restResponse.setStatus(RestStatus.status400);
                     restResponse.setData("Parameter 'perPage' must be positive");
                     return;
@@ -117,7 +126,8 @@ public class PostServlet extends HttpServlet {
                 try {
                     page = Integer.parseInt(pageParam);
                     if (page < 1 || page > lastPage) throw new NumberFormatException();
-                } catch (NumberFormatException ex) {
+                }
+                catch (NumberFormatException ex) {
                     restResponse.setStatus(RestStatus.status400);
                     restResponse.setData(
                         "Parameter 'page' must be between 1 and " + lastPage
@@ -173,42 +183,54 @@ public class PostServlet extends HttpServlet {
     }
 
     // ======================== CREATE POST ========================
-    private void createPost(HttpServletRequest req) {
+  private void createPost(HttpServletRequest req) {
 
-        try {
-            // 🔹 безопасно читаем body
-            String raw = req.getReader()
-                .lines()
-                .reduce("", String::concat)
-                .trim();
+    try {
+        FormParseResult res = formParseService.parse(req);
+        Map<String, String> fields = res.getFields();
+        var files = res.getFiles().values(); // Collection<FileItem>
 
-            if (raw.isEmpty()) {
-                throw new IllegalArgumentException("Empty request body");
-            }
-
-            JsonObject body = gson.fromJson(raw, JsonObject.class);
-
-            if (!body.has("content") || body.get("content").getAsString().isBlank()) {
-                throw new IllegalArgumentException("Missing 'content'");
-            }
-
-            Post post = new Post()
-                .setUserId(UUID.fromString(jwtToken.getPayload().getSub()))
-                .setContent(body.get("content").getAsString())
-                .setVisibility(
-                    body.has("visibility")
-                        ? body.get("visibility").getAsString()
-                        : "public"
-                );
-
-            Post created = dataAccessor.addPost(post);
-
-            restResponse.setData(created);
-            restResponse.getMeta().setDataType("object");
+        String content = fields.get("content");
+        if (content == null || content.isBlank()) {
+            throw new FormParseException("Missing 'content'");
         }
-        catch (Exception ex) {
-            restResponse.setStatus(RestStatus.status400);
-            restResponse.setData(ex.getMessage());
+
+        Post post = new Post()
+            .setUserId(UUID.fromString(jwtToken.getPayload().getSub()))
+            .setContent(content)
+            .setVisibility(
+                fields.getOrDefault("visibility", "public")
+            );
+
+        // 1️⃣ создаём пост
+        Post created = dataAccessor.addPost(post);
+
+        // 2️⃣ если есть файл — сохраняем
+        if (!files.isEmpty()) {
+            FileItem file = files.stream().findFirst().get();
+
+            // сохраняем файл
+            String fileName = storageService.save(file);
+
+            // связываем media ↔ post
+            dataAccessor.attachMediaToPost(
+                created.getId(),
+                fileName,
+                "image"
+            );
         }
+
+        restResponse.setData(created);
+        restResponse.getMeta().setDataType("object");
     }
+    catch (FormParseException ex) {
+        restResponse.setStatus(RestStatus.status400);
+        restResponse.setData(ex.getMessage());
+    }
+    catch (Exception ex) {
+        restResponse.setStatus(RestStatus.status500);
+        restResponse.setData(ex.getMessage());
+    }
+}
+
 }

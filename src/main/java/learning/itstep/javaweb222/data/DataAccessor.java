@@ -285,35 +285,47 @@ public void attachMediaToPost(UUID postId, String fileName, String type) {
         return messageDao.getMessageReads(messageId);
     }
 
-    // ================= NOTIFICATIONS =================
+   // ================= NOTIFICATIONS =================
 
-    public List<Notification> getUserNotifications(String userId) {
-        return notificationDao.getUserNotifications(userId);
-    }
+public List<Notification> getUserNotifications(String userId) {
+    return notificationDao.getUserNotifications(userId);
+}
 
-    public int getUnreadNotificationsCount(String userId) {
-        return notificationDao.getUnreadCount(userId);
-    }
+public List<Notification> getVacancyNotifications(String userId) {
+    return notificationDao.getVacancyNotifications(userId);
+}
 
-    public Notification getNotificationById(String notificationId) {
-        return notificationDao.getById(notificationId);
-    }
+public List<Notification> getPublicationNotifications(String userId) {
+    return notificationDao.getPublicationNotifications(userId);
+}
 
-    public void addNotification(Notification notification) throws Exception {
-        notificationDao.addNotification(notification);
-    }
+public List<Notification> getMentionNotifications(String userId) {
+    return notificationDao.getMentionNotifications(userId);
+}
 
-    public void markNotificationAsRead(String notificationId) {
-        notificationDao.markAsRead(notificationId);
-    }
+public int getUnreadNotificationsCount(String userId) {
+    return notificationDao.getUnreadCount(userId);
+}
 
-    public void markAllNotificationsAsRead(String userId) {
-        notificationDao.markAllAsRead(userId);
-    }
+public Notification getNotificationById(String notificationId) {
+    return notificationDao.getById(notificationId);
+}
 
-    public void deleteNotification(String notificationId) {
-        notificationDao.deleteNotification(notificationId);
-    }
+public void addNotification(Notification notification) throws Exception {
+    notificationDao.addNotification(notification);
+}
+
+public void markNotificationAsRead(String notificationId) {
+    notificationDao.markAsRead(notificationId);
+}
+
+public void markAllNotificationsAsRead(String userId) {
+    notificationDao.markAllAsRead(userId);
+}
+
+public void deleteNotification(String notificationId) {
+    notificationDao.deleteNotification(notificationId);
+}
 
     // ================= PROFILE ANALYTICS =================
 

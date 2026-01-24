@@ -49,7 +49,18 @@ public class Vacancy {
         ts = rs.getTimestamp("deleted_at");
         if (ts != null) v.setDeletedAt(new Date(ts.getTime()));
 
-        v.setCompany(Company.fromResultSet(rs));
+//        v.setCompany(Company.fromResultSet(rs));
+ // ---- company JOIN is optional ----
+    try {
+        Company c = new Company();
+        c.setId(UUID.fromString(rs.getString("company_id")));
+        c.setName(rs.getString("company_name"));
+        c.setLogoUrl(rs.getString("company_logo_url"));
+        c.setIndustry(rs.getString("industry"));
+        c.setLocation(rs.getString("company_location"));
+        v.setCompany(c);
+    }
+    catch (Exception ignore) {}
         return v;
     }
 

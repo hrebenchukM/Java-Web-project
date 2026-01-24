@@ -23,6 +23,9 @@ public class ServletsConfig extends ServletModule {
         serve("/user/*" ).with(UserServlet.class   );
         serve("/vacancy"   ).with(VacancyServlet.class   );
         serve("/vacancy/*" ).with(VacancyServlet.class   );
+        serve("/notifications"   ).with(NotificationsServlet.class);
+        serve("/notifications/*" ).with(NotificationsServlet.class);
+
     }
     
 }

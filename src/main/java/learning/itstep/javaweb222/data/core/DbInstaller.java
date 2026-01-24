@@ -832,11 +832,12 @@ public class DbInstaller {
         if (!exec(
             "CREATE TABLE IF NOT EXISTS notifications ("
             + "notification_id CHAR(36) PRIMARY KEY,"
-            + "user_id CHAR(36) NOT NULL,"
-            + "type VARCHAR(32) NOT NULL,"                     // vacancy, post, mention, connection, message
+            + "user_id CHAR(36) NOT NULL,"              // recipient
+            + "actor_user_id CHAR(36) NULL,"            // ← ВАЖНО
+            + "type VARCHAR(32) NOT NULL,"
             + "title VARCHAR(256) NULL,"
             + "body TEXT NULL,"
-            + "entity_type VARCHAR(32) NULL,"                  // post, vacancy, user, message, etc.
+            + "entity_type VARCHAR(32) NULL,"
             + "entity_id CHAR(36) NULL,"
             + "is_read TINYINT NOT NULL DEFAULT 0,"
             + "created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,"
@@ -847,6 +848,7 @@ public class DbInstaller {
             + "COLLATE=utf8mb4_unicode_ci",
             "notifications"
         )) return false;
+
         
         // ------------------ UserActivity (Audit log) ------------------
         if (!exec(

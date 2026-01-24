@@ -543,175 +543,295 @@ if (!exec(sql, "seed media admin post 2")) return false;
 
 
 
-        // ------------------ PostMedia: Admin posts ------------------
-sql =
-    "INSERT INTO post_media (post_media_id, post_id, media_id) " +
-    "SELECT UUID(), p.post_id, 'b1111c55-9853-11f0-b1b7-62517600596c' " +
-    "FROM posts p " +
-    "WHERE p.user_id='69231c55-9851-11f0-b1b7-62517600596c' " +
-    "  AND p.content='Seed post 1' " +
-    "  AND NOT EXISTS (" +
-    "      SELECT 1 FROM post_media pm WHERE pm.post_id=p.post_id" +
-    "  )";
+            // ------------------ PostMedia: Admin posts ------------------
+    sql =
+        "INSERT INTO post_media (post_media_id, post_id, media_id) " +
+        "SELECT UUID(), p.post_id, 'b1111c55-9853-11f0-b1b7-62517600596c' " +
+        "FROM posts p " +
+        "WHERE p.user_id='69231c55-9851-11f0-b1b7-62517600596c' " +
+        "  AND p.content='Seed post 1' " +
+        "  AND NOT EXISTS (" +
+        "      SELECT 1 FROM post_media pm WHERE pm.post_id=p.post_id" +
+        "  )";
 
-if (!exec(sql, "seed post_media admin post 1")) return false;
+    if (!exec(sql, "seed post_media admin post 1")) return false;
 
-sql =
-    "INSERT INTO post_media (post_media_id, post_id, media_id) " +
-    "SELECT UUID(), p.post_id, 'b2222c55-9853-11f0-b1b7-62517600596c' " +
-    "FROM posts p " +
-    "WHERE p.user_id='69231c55-9851-11f0-b1b7-62517600596c' " +
-    "  AND p.content='Seed post 2' " +
-    "  AND NOT EXISTS (" +
-    "      SELECT 1 FROM post_media pm WHERE pm.post_id=p.post_id" +
-    "  )";
+    sql =
+        "INSERT INTO post_media (post_media_id, post_id, media_id) " +
+        "SELECT UUID(), p.post_id, 'b2222c55-9853-11f0-b1b7-62517600596c' " +
+        "FROM posts p " +
+        "WHERE p.user_id='69231c55-9851-11f0-b1b7-62517600596c' " +
+        "  AND p.content='Seed post 2' " +
+        "  AND NOT EXISTS (" +
+        "      SELECT 1 FROM post_media pm WHERE pm.post_id=p.post_id" +
+        "  )";
 
-if (!exec(sql, "seed post_media admin post 2")) return false;
-
-
-// ------------------ PostMedia: Designer ------------------
-sql =
-    "INSERT INTO post_media (post_media_id, post_id, media_id) " +
-    "SELECT UUID(), p.post_id, 'b3333c55-9853-11f0-b1b7-62517600596c' " +
-    "FROM posts p " +
-    "WHERE p.user_id='7a9f1c21-9851-11f0-b1b7-62517600596c' " +
-    "  AND NOT EXISTS (" +
-    "      SELECT 1 FROM post_media pm WHERE pm.post_id=p.post_id" +
-    "  )";
-
-if (!exec(sql, "seed post_media designer")) return false;
-
-// ------------------ PostMedia: Developer ------------------
-sql =
-    "INSERT INTO post_media (post_media_id, post_id, media_id) " +
-    "SELECT UUID(), p.post_id, 'b4444c55-9853-11f0-b1b7-62517600596c' " +
-    "FROM posts p " +
-    "WHERE p.user_id='8c21d9a2-9851-11f0-b1b7-62517600596c' " +
-    "  AND NOT EXISTS (" +
-    "      SELECT 1 FROM post_media pm WHERE pm.post_id=p.post_id" +
-    "  )";
-
-if (!exec(sql, "seed post_media developer")) return false;
+    if (!exec(sql, "seed post_media admin post 2")) return false;
 
 
-// ------------------ Companies: Vacancies demo ------------------
-sql =
-    "INSERT INTO companies (company_id, name, logo_url, location) " +
-    "SELECT UUID(), 'Classpass', 'classpass.jpg', 'USA' " +
-    "WHERE NOT EXISTS (SELECT 1 FROM companies WHERE name='Classpass')";
-if (!exec(sql, "seed company Classpass")) return false;
+    // ------------------ PostMedia: Designer ------------------
+    sql =
+        "INSERT INTO post_media (post_media_id, post_id, media_id) " +
+        "SELECT UUID(), p.post_id, 'b3333c55-9853-11f0-b1b7-62517600596c' " +
+        "FROM posts p " +
+        "WHERE p.user_id='7a9f1c21-9851-11f0-b1b7-62517600596c' " +
+        "  AND NOT EXISTS (" +
+        "      SELECT 1 FROM post_media pm WHERE pm.post_id=p.post_id" +
+        "  )";
 
-sql =
-    "INSERT INTO companies (company_id, name, logo_url, location) " +
-    "SELECT UUID(), 'Airtable', 'airtable.jpg', 'USA' " +
-    "WHERE NOT EXISTS (SELECT 1 FROM companies WHERE name='Airtable')";
-if (!exec(sql, "seed company Airtable")) return false;
+    if (!exec(sql, "seed post_media designer")) return false;
 
-sql =
-    "INSERT INTO companies (company_id, name, logo_url, location) " +
-    "SELECT UUID(), 'Wealthsimple', 'wealthsimple.jpg', 'Remote' " +
-    "WHERE NOT EXISTS (SELECT 1 FROM companies WHERE name='Wealthsimple')";
-if (!exec(sql, "seed company Wealthsimple")) return false;
+    // ------------------ PostMedia: Developer ------------------
+    sql =
+        "INSERT INTO post_media (post_media_id, post_id, media_id) " +
+        "SELECT UUID(), p.post_id, 'b4444c55-9853-11f0-b1b7-62517600596c' " +
+        "FROM posts p " +
+        "WHERE p.user_id='8c21d9a2-9851-11f0-b1b7-62517600596c' " +
+        "  AND NOT EXISTS (" +
+        "      SELECT 1 FROM post_media pm WHERE pm.post_id=p.post_id" +
+        "  )";
 
-sql =
-    "INSERT INTO companies (company_id, name, logo_url, location) " +
-    "SELECT UUID(), 'Dribbble', 'dribbble.jpg', 'Remote' " +
-    "WHERE NOT EXISTS (SELECT 1 FROM companies WHERE name='Dribbble')";
-if (!exec(sql, "seed company Dribbble")) return false;
-
-sql =
-    "INSERT INTO companies (company_id, name, logo_url, location) " +
-    "SELECT UUID(), 'Freshworks', 'freshworks.jpg', 'Brazil' " +
-    "WHERE NOT EXISTS (SELECT 1 FROM companies WHERE name='Freshworks')";
-if (!exec(sql, "seed company Freshworks")) return false;
+    if (!exec(sql, "seed post_media developer")) return false;
 
 
+    // ------------------ Companies: Vacancies demo ------------------
+    sql =
+        "INSERT INTO companies (company_id, name, logo_url, location) " +
+        "SELECT UUID(), 'Classpass', 'classpass.jpg', 'USA' " +
+        "WHERE NOT EXISTS (SELECT 1 FROM companies WHERE name='Classpass')";
+    if (!exec(sql, "seed company Classpass")) return false;
 
-// ------------------ Vacancies: Best ------------------
-sql =
-    "INSERT INTO vacancies (vacancy_id, company_id, posted_by, title, location, salary_from, salary_to) " +
-    "SELECT UUID(), c.company_id, c.company_id, " +
-    "'Walmart', 'Denison, AL', 145000, 225000 " +
-    "FROM companies c WHERE c.name='Classpass' " +
-    "AND NOT EXISTS (SELECT 1 FROM vacancies v WHERE v.company_id=c.company_id AND v.title='Walmart')";
-if (!exec(sql, "seed vacancy Classpass Walmart")) return false;
+    sql =
+        "INSERT INTO companies (company_id, name, logo_url, location) " +
+        "SELECT UUID(), 'Airtable', 'airtable.jpg', 'USA' " +
+        "WHERE NOT EXISTS (SELECT 1 FROM companies WHERE name='Airtable')";
+    if (!exec(sql, "seed company Airtable")) return false;
 
-sql =
-    "INSERT INTO vacancies (vacancy_id, company_id, posted_by, title, location, salary_from, salary_to) " +
-    "SELECT UUID(), c.company_id, c.company_id, " +
-    "'Walmart', 'Las Vegas, NM', 155000, 215000 " +
-    "FROM companies c WHERE c.name='Airtable' " +
-    "AND NOT EXISTS (SELECT 1 FROM vacancies v WHERE v.company_id=c.company_id AND v.location='Las Vegas, NM')";
-if (!exec(sql, "seed vacancy Airtable Walmart")) return false;
+    sql =
+        "INSERT INTO companies (company_id, name, logo_url, location) " +
+        "SELECT UUID(), 'Wealthsimple', 'wealthsimple.jpg', 'Remote' " +
+        "WHERE NOT EXISTS (SELECT 1 FROM companies WHERE name='Wealthsimple')";
+    if (!exec(sql, "seed company Wealthsimple")) return false;
 
-sql =
-    "INSERT INTO vacancies (vacancy_id, company_id, posted_by, title, location, salary_from, salary_to) " +
-    "SELECT UUID(), c.company_id, c.company_id, " +
-    "'Varsity Tutors (Remote)', 'Remote', 205000, 285000 " +
-    "FROM companies c WHERE c.name='Wealthsimple' " +
-    "AND NOT EXISTS (SELECT 1 FROM vacancies v WHERE v.company_id=c.company_id AND v.title LIKE 'Varsity Tutors%')";
-if (!exec(sql, "seed vacancy Wealthsimple")) return false;
+    sql =
+        "INSERT INTO companies (company_id, name, logo_url, location) " +
+        "SELECT UUID(), 'Dribbble', 'dribbble.jpg', 'Remote' " +
+        "WHERE NOT EXISTS (SELECT 1 FROM companies WHERE name='Dribbble')";
+    if (!exec(sql, "seed company Dribbble")) return false;
 
-// ------------------ Vacancies: Graphic Designer ------------------
-sql =
-    "INSERT INTO vacancies (vacancy_id, company_id, posted_by, title, location) " +
-    "SELECT UUID(), c.company_id, c.company_id, " +
-    "'Graphic Designer', 'United States (Remote)' " +
-    "FROM companies c WHERE c.name='Dribbble' " +
-    "AND NOT EXISTS (SELECT 1 FROM vacancies v WHERE v.company_id=c.company_id AND v.title='Graphic Designer')";
-if (!exec(sql, "seed vacancy Dribbble Designer")) return false;
-
-sql =
-    "INSERT INTO vacancies (vacancy_id, company_id, posted_by, title, location) " +
-    "SELECT UUID(), c.company_id, c.company_id, " +
-    "'Graphic Designer', 'Florianópolis, Brazil (Remote)' " +
-    "FROM companies c WHERE c.name='Freshworks' " +
-    "AND NOT EXISTS (SELECT 1 FROM vacancies v WHERE v.company_id=c.company_id AND v.location LIKE 'Florianópolis%')";
-if (!exec(sql, "seed vacancy Freshworks Designer")) return false;
+    sql =
+        "INSERT INTO companies (company_id, name, logo_url, location) " +
+        "SELECT UUID(), 'Freshworks', 'freshworks.jpg', 'Brazil' " +
+        "WHERE NOT EXISTS (SELECT 1 FROM companies WHERE name='Freshworks')";
+    if (!exec(sql, "seed company Freshworks")) return false;
 
 
-// ------------------ Recommended Job Search Queries ------------------
-sql =
-    "INSERT INTO recommended_job_queries (recommended_job_query_id, query) " +
-    "SELECT UUID(), 'marketing manager' " +
-    "WHERE NOT EXISTS (SELECT 1 FROM recommended_job_queries WHERE query='marketing manager')";
-if (!exec(sql, "seed job query marketing")) return false;
 
-sql =
-    "INSERT INTO recommended_job_queries (recommended_job_query_id, query) " +
-    "SELECT UUID(), 'hr' " +
-    "WHERE NOT EXISTS (SELECT 1 FROM recommended_job_queries WHERE query='hr')";
-if (!exec(sql, "seed job query hr")) return false;
+    // ------------------ Vacancies: Best ------------------
+    sql =
+        "INSERT INTO vacancies (vacancy_id, company_id, posted_by, title, location, salary_from, salary_to) " +
+        "SELECT UUID(), c.company_id, c.company_id, " +
+        "'Walmart', 'Denison, AL', 145000, 225000 " +
+        "FROM companies c WHERE c.name='Classpass' " +
+        "AND NOT EXISTS (SELECT 1 FROM vacancies v WHERE v.company_id=c.company_id AND v.title='Walmart')";
+    if (!exec(sql, "seed vacancy Classpass Walmart")) return false;
 
-sql =
-    "INSERT INTO recommended_job_queries (recommended_job_query_id, query) " +
-    "SELECT UUID(), 'legal' " +
-    "WHERE NOT EXISTS (SELECT 1 FROM recommended_job_queries WHERE query='legal')";
-if (!exec(sql, "seed job query legal")) return false;
+    sql =
+        "INSERT INTO vacancies (vacancy_id, company_id, posted_by, title, location, salary_from, salary_to) " +
+        "SELECT UUID(), c.company_id, c.company_id, " +
+        "'Walmart', 'Las Vegas, NM', 155000, 215000 " +
+        "FROM companies c WHERE c.name='Airtable' " +
+        "AND NOT EXISTS (SELECT 1 FROM vacancies v WHERE v.company_id=c.company_id AND v.location='Las Vegas, NM')";
+    if (!exec(sql, "seed vacancy Airtable Walmart")) return false;
 
-sql =
-    "INSERT INTO recommended_job_queries (recommended_job_query_id, query) " +
-    "SELECT UUID(), 'sales' " +
-    "WHERE NOT EXISTS (SELECT 1 FROM recommended_job_queries WHERE query='sales')";
-if (!exec(sql, "seed job query sales")) return false;
+    sql =
+        "INSERT INTO vacancies (vacancy_id, company_id, posted_by, title, location, salary_from, salary_to) " +
+        "SELECT UUID(), c.company_id, c.company_id, " +
+        "'Varsity Tutors (Remote)', 'Remote', 205000, 285000 " +
+        "FROM companies c WHERE c.name='Wealthsimple' " +
+        "AND NOT EXISTS (SELECT 1 FROM vacancies v WHERE v.company_id=c.company_id AND v.title LIKE 'Varsity Tutors%')";
+    if (!exec(sql, "seed vacancy Wealthsimple")) return false;
 
-sql =
-    "INSERT INTO recommended_job_queries (recommended_job_query_id, query) " +
-    "SELECT UUID(), 'google' " +
-    "WHERE NOT EXISTS (SELECT 1 FROM recommended_job_queries WHERE query='google')";
-if (!exec(sql, "seed job query google")) return false;
+    // ------------------ Vacancies: Graphic Designer ------------------
+    sql =
+        "INSERT INTO vacancies (vacancy_id, company_id, posted_by, title, location) " +
+        "SELECT UUID(), c.company_id, c.company_id, " +
+        "'Graphic Designer', 'United States (Remote)' " +
+        "FROM companies c WHERE c.name='Dribbble' " +
+        "AND NOT EXISTS (SELECT 1 FROM vacancies v WHERE v.company_id=c.company_id AND v.title='Graphic Designer')";
+    if (!exec(sql, "seed vacancy Dribbble Designer")) return false;
 
-sql =
-    "INSERT INTO recommended_job_queries (recommended_job_query_id, query) " +
-    "SELECT UUID(), 'analyst' " +
-    "WHERE NOT EXISTS (SELECT 1 FROM recommended_job_queries WHERE query='analyst')";
-if (!exec(sql, "seed job query analyst")) return false;
+    sql =
+        "INSERT INTO vacancies (vacancy_id, company_id, posted_by, title, location) " +
+        "SELECT UUID(), c.company_id, c.company_id, " +
+        "'Graphic Designer', 'Florianópolis, Brazil (Remote)' " +
+        "FROM companies c WHERE c.name='Freshworks' " +
+        "AND NOT EXISTS (SELECT 1 FROM vacancies v WHERE v.company_id=c.company_id AND v.location LIKE 'Florianópolis%')";
+    if (!exec(sql, "seed vacancy Freshworks Designer")) return false;
 
-sql =
-    "INSERT INTO recommended_job_queries (recommended_job_query_id, query) " +
-    "SELECT UUID(), 'amazon' " +
-    "WHERE NOT EXISTS (SELECT 1 FROM recommended_job_queries WHERE query='amazon')";
-if (!exec(sql, "seed job query amazon")) return false;
+
+    // ------------------ Recommended Job Search Queries ------------------
+    sql =
+        "INSERT INTO recommended_job_queries (recommended_job_query_id, query) " +
+        "SELECT UUID(), 'marketing manager' " +
+        "WHERE NOT EXISTS (SELECT 1 FROM recommended_job_queries WHERE query='marketing manager')";
+    if (!exec(sql, "seed job query marketing")) return false;
+
+    sql =
+        "INSERT INTO recommended_job_queries (recommended_job_query_id, query) " +
+        "SELECT UUID(), 'hr' " +
+        "WHERE NOT EXISTS (SELECT 1 FROM recommended_job_queries WHERE query='hr')";
+    if (!exec(sql, "seed job query hr")) return false;
+
+    sql =
+        "INSERT INTO recommended_job_queries (recommended_job_query_id, query) " +
+        "SELECT UUID(), 'legal' " +
+        "WHERE NOT EXISTS (SELECT 1 FROM recommended_job_queries WHERE query='legal')";
+    if (!exec(sql, "seed job query legal")) return false;
+
+    sql =
+        "INSERT INTO recommended_job_queries (recommended_job_query_id, query) " +
+        "SELECT UUID(), 'sales' " +
+        "WHERE NOT EXISTS (SELECT 1 FROM recommended_job_queries WHERE query='sales')";
+    if (!exec(sql, "seed job query sales")) return false;
+
+    sql =
+        "INSERT INTO recommended_job_queries (recommended_job_query_id, query) " +
+        "SELECT UUID(), 'google' " +
+        "WHERE NOT EXISTS (SELECT 1 FROM recommended_job_queries WHERE query='google')";
+    if (!exec(sql, "seed job query google")) return false;
+
+    sql =
+        "INSERT INTO recommended_job_queries (recommended_job_query_id, query) " +
+        "SELECT UUID(), 'analyst' " +
+        "WHERE NOT EXISTS (SELECT 1 FROM recommended_job_queries WHERE query='analyst')";
+    if (!exec(sql, "seed job query analyst")) return false;
+
+    sql =
+        "INSERT INTO recommended_job_queries (recommended_job_query_id, query) " +
+        "SELECT UUID(), 'amazon' " +
+        "WHERE NOT EXISTS (SELECT 1 FROM recommended_job_queries WHERE query='amazon')";
+    if (!exec(sql, "seed job query amazon")) return false;
+
+
+
+    // ------------------ Notifications: Like post ------------------
+    sql =
+        "INSERT INTO notifications (" +
+        "notification_id, user_id, actor_user_id, type, title, body, entity_type, is_read" +
+        ") SELECT UUID(), " +
+        "'69231c55-9851-11f0-b1b7-62517600596c', " + // recipient: admin
+        "'7a9f1c21-9851-11f0-b1b7-62517600596c', " + // actor: designer
+        "'like', " +
+        "'New like on your post', " +
+        "'Emma Stone liked your post: The dumbest mistake is viewing design as something you do...', " +
+        "'post', 0 " +
+        "WHERE NOT EXISTS (" +
+        "   SELECT 1 FROM notifications " +
+        "   WHERE user_id='69231c55-9851-11f0-b1b7-62517600596c' " +
+        "     AND type='like'" +
+        ")";
+
+    if (!exec(sql, "seed notification like")) return false;
+
+
+    // ------------------ Notifications: Comment ------------------
+    sql =
+        "INSERT INTO notifications (" +
+        "notification_id, user_id, actor_user_id, type, title, body, entity_type, is_read" +
+        ") SELECT UUID(), " +
+        "'69231c55-9851-11f0-b1b7-62517600596c', " + // recipient: admin
+        "'8c21d9a2-9851-11f0-b1b7-62517600596c', " + // actor: developer
+        "'comment', " +
+        "'New comment on your post', " +
+        "'Lucas Brown commented: Great insights! I completely agree with this perspective.', " +
+        "'post', 0 " +
+        "WHERE NOT EXISTS (" +
+        "   SELECT 1 FROM notifications " +
+        "   WHERE user_id='69231c55-9851-11f0-b1b7-62517600596c' " +
+        "     AND type='comment'" +
+        ")";
+
+    if (!exec(sql, "seed notification comment")) return false;
+
+
+    // ------------------ Notifications: Connection ------------------
+    sql =
+        "INSERT INTO notifications (" +
+        "notification_id, user_id, actor_user_id, type, title, body, entity_type, is_read" +
+        ") SELECT UUID(), " +
+        "'69231c55-9851-11f0-b1b7-62517600596c', " + // recipient: admin
+        "'7a9f1c21-9851-11f0-b1b7-62517600596c', " + // actor: designer
+        "'connection', " +
+        "'Connection request accepted', " +
+        "'Emma Stone accepted your connection request', " +
+        "'user', 1 " +
+        "WHERE NOT EXISTS (" +
+        "   SELECT 1 FROM notifications " +
+        "   WHERE user_id='69231c55-9851-11f0-b1b7-62517600596c' " +
+        "     AND type='connection'" +
+        ")";
+
+    if (!exec(sql, "seed notification connection")) return false;
+
+
+    // ------------------ Notifications: Mention ------------------
+    sql =
+        "INSERT INTO notifications (" +
+        "notification_id, user_id, actor_user_id, type, title, body, entity_type, is_read" +
+        ") SELECT UUID(), " +
+        "'69231c55-9851-11f0-b1b7-62517600596c', " + // recipient: admin
+        "'8c21d9a2-9851-11f0-b1b7-62517600596c', " + // actor: developer
+        "'mention', " +
+        "'You were mentioned', " +
+        "'Lucas Brown mentioned you in a comment', " +
+        "'post', 1 " +
+        "WHERE NOT EXISTS (" +
+        "   SELECT 1 FROM notifications " +
+        "   WHERE user_id='69231c55-9851-11f0-b1b7-62517600596c' " +
+        "     AND type='mention'" +
+        ")";
+
+    if (!exec(sql, "seed notification mention")) return false;
+
+
+    // ------------------ Notifications: Vacancy ------------------
+        sql =
+          "INSERT INTO notifications (" +
+          "notification_id, user_id, actor_user_id, type, title, body, entity_type, entity_id, is_read" +
+          ") SELECT UUID(), " +
+          "'69231c55-9851-11f0-b1b7-62517600596c', " + // recipient: admin
+          "NULL, " +                                  // system notification
+          "'vacancy', " +
+          "'New job recommendation', " +
+          "'Google posted a new job: Senior UI/UX Designer (San Francisco, CA)', " +
+          "'vacancy', " +
+          "(SELECT vacancy_id FROM vacancies LIMIT 1), " + // ← ВАЖНО
+          "0 " +
+          "WHERE NOT EXISTS (" +
+          "   SELECT 1 FROM notifications " +
+          "   WHERE user_id='69231c55-9851-11f0-b1b7-62517600596c' " +
+          "     AND type='vacancy'" +
+          ")";
+
+      if (!exec(sql, "seed notification vacancy")) return false;
+
+
+    // ------------------ User Activity: Like ------------------
+    sql =
+        "INSERT INTO user_activity (" +
+        "activity_id, user_id, action, entity_type, meta" +
+        ") SELECT UUID(), " +
+        "'7a9f1c21-9851-11f0-b1b7-62517600596c', " + // designer
+        "'like', 'post', JSON_OBJECT('target','admin')" +
+        "WHERE NOT EXISTS (" +
+        "   SELECT 1 FROM user_activity " +
+        "   WHERE action='like' " +
+        "     AND user_id='7a9f1c21-9851-11f0-b1b7-62517600596c'" +
+        ")";
+
+    if (!exec(sql, "seed activity like")) return false;
+
 
 
         return true;

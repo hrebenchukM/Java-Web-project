@@ -50,17 +50,20 @@ public class Vacancy {
         if (ts != null) v.setDeletedAt(new Date(ts.getTime()));
 
 //        v.setCompany(Company.fromResultSet(rs));
- // ---- company JOIN is optional ----
-    try {
+  // ---------- COMPANY (JOIN, OPTIONAL) ----------
+    String cid = rs.getString("c_company_id");
+    if (cid != null) {
         Company c = new Company();
-        c.setId(UUID.fromString(rs.getString("company_id")));
-        c.setName(rs.getString("company_name"));
-        c.setLogoUrl(rs.getString("company_logo_url"));
-        c.setIndustry(rs.getString("industry"));
-        c.setLocation(rs.getString("company_location"));
+        c.setId(UUID.fromString(cid));
+        c.setName(rs.getString("c_name"));
+        c.setLogoUrl(rs.getString("c_logo_url"));
+        c.setIndustry(rs.getString("c_industry"));
+        c.setLocation(rs.getString("c_location"));
+        c.setWebsiteUrl(rs.getString("c_website_url"));
+        c.setDescription(rs.getString("c_description"));
+
         v.setCompany(c);
     }
-    catch (Exception ignore) {}
         return v;
     }
 

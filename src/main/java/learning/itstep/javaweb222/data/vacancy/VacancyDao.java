@@ -30,15 +30,24 @@ public class VacancyDao {
 
         List<Vacancy> list = new ArrayList<>();
 
-        String sql = """
-            SELECT
-                v.*,
-                c.*
-            FROM vacancies v
-            JOIN companies c ON c.company_id = v.company_id
-            WHERE v.deleted_at IS NULL
-            ORDER BY v.posted_at DESC
-        """;
+String sql = """
+  SELECT
+        v.*,
+    
+        c.company_id   AS c_company_id,
+        c.name         AS c_name,
+        c.logo_url     AS c_logo_url,
+        c.industry     AS c_industry,
+        c.location     AS c_location,
+        c.website_url AS c_website_url,
+        c.description AS c_description
+    
+    FROM vacancies v
+    LEFT JOIN companies c ON c.company_id = v.company_id
+    WHERE v.deleted_at IS NULL
+    ORDER BY v.posted_at DESC
+""";
+
 
         try (PreparedStatement ps = db.getConnection().prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {

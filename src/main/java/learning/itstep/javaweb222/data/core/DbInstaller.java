@@ -426,6 +426,7 @@ public class DbInstaller {
                + "owner_id CHAR(36) NOT NULL,"
                + "name VARCHAR(128) NOT NULL,"
                + "description TEXT NULL,"
+               + "avatar_url VARCHAR(256) NULL,"
                + "created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,"
                + "updated_at DATETIME NULL,"
                + "deleted_at DATETIME NULL"
@@ -520,6 +521,19 @@ public class DbInstaller {
             + "COLLATE=utf8mb4_unicode_ci",
             "posts"
         )) return false;
+        // ------------------ Groups: Posts ------------------
+        if (!exec(
+            "CREATE TABLE IF NOT EXISTS group_posts (" +
+            "group_post_id CHAR(36) PRIMARY KEY," +
+            "group_id CHAR(36) NOT NULL," +
+            "post_id CHAR(36) NOT NULL," +
+            "created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP" +
+            ") ENGINE=INNODB " +
+            "DEFAULT CHARSET=utf8mb4 " +
+            "COLLATE=utf8mb4_unicode_ci",
+            "group_posts"
+        )) return false;
+
 
         // ------------------ Content: Media ------------------
         if (!exec(
@@ -935,6 +949,9 @@ public class DbInstaller {
         )) return false;
 
 
+        
+        
+        
         
         return true;
     }

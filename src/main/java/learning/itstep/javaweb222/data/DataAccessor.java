@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.util.List;
 import java.util.UUID;
+import learning.itstep.javaweb222.data.activity.UserActivityDao;
 
 import learning.itstep.javaweb222.data.core.DbInstaller;
 import learning.itstep.javaweb222.data.core.DbSeeder;
@@ -28,13 +29,23 @@ import learning.itstep.javaweb222.data.dto.MessageRead;
 import learning.itstep.javaweb222.data.dto.Notification;
 import learning.itstep.javaweb222.data.dto.Education;
 import learning.itstep.javaweb222.data.dto.Experience;
+import learning.itstep.javaweb222.data.dto.GroupMember;
 import learning.itstep.javaweb222.data.dto.Media;
 import learning.itstep.javaweb222.data.dto.Skill;
+import learning.itstep.javaweb222.data.dto.UserActivity;
 import learning.itstep.javaweb222.data.dto.UserSkill;
 import learning.itstep.javaweb222.data.dto.UserLanguage;
 import learning.itstep.javaweb222.data.dto.Vacancy;
+import learning.itstep.javaweb222.data.event.EventDao;
+import learning.itstep.javaweb222.data.group.GroupDao;
 import learning.itstep.javaweb222.data.media.MediaDao;
+import learning.itstep.javaweb222.data.network.NetworkDao;
+import learning.itstep.javaweb222.data.page.PageDao;
 import learning.itstep.javaweb222.data.vacancy.VacancyDao;
+import learning.itstep.javaweb222.models.event.EventBlockModel;
+import learning.itstep.javaweb222.models.group.GroupBlockModel;
+import learning.itstep.javaweb222.models.group.GroupModel;
+import learning.itstep.javaweb222.models.page.PageBlockModel;
 import learning.itstep.javaweb222.models.profile.CertificateBlockModel;
 import learning.itstep.javaweb222.models.profile.EducationBlockModel;
 import learning.itstep.javaweb222.models.profile.ExperienceBlockModel;
@@ -54,34 +65,51 @@ public class DataAccessor {
     private final CompanyDao companyDao;
     private final VacancyDao vacancyDao;
     private final MediaDao  mediaDao;
+    private final NetworkDao networkDao;
+    private final UserActivityDao userActivityDao;
+    private final GroupDao groupDao;
+    private final PageDao pageDao;
+    private final EventDao eventDao;
 
-    
-  @Inject
-    public DataAccessor(
-            DbSeeder dbSeeder,
-            DbInstaller dbInstaller,
-            UserDao userDao,
-            ProfileDao profileDao,
-            PostDao postDao,
-            ChatDao chatDao,
-            MessageDao messageDao,
-            NotificationDao notificationDao,
-            CompanyDao companyDao,
-            VacancyDao vacancyDao,
-            MediaDao mediaDao
-    ) {
-        this.dbSeeder = dbSeeder;
-        this.dbInstaller = dbInstaller;
-        this.userDao = userDao;
-        this.profileDao = profileDao;
-        this.postDao = postDao;
-        this.chatDao = chatDao;
-        this.messageDao = messageDao;
-        this.notificationDao = notificationDao;
-        this.companyDao = companyDao;
-        this.vacancyDao = vacancyDao;
-        this.mediaDao = mediaDao;
-    }
+ @Inject
+public DataAccessor(
+        DbSeeder dbSeeder,
+        DbInstaller dbInstaller,
+        UserDao userDao,
+        ProfileDao profileDao,
+        PostDao postDao,
+        ChatDao chatDao,
+        MessageDao messageDao,
+        NotificationDao notificationDao,
+        CompanyDao companyDao,
+        VacancyDao vacancyDao,
+        MediaDao mediaDao,
+        NetworkDao networkDao,
+        UserActivityDao userActivityDao,
+
+        GroupDao groupDao,
+        PageDao pageDao,
+        EventDao eventDao
+) {
+
+    this.dbSeeder = dbSeeder;
+    this.dbInstaller = dbInstaller;
+    this.userDao = userDao;
+    this.profileDao = profileDao;
+    this.postDao = postDao;
+    this.chatDao = chatDao;
+    this.messageDao = messageDao;
+    this.notificationDao = notificationDao;
+    this.companyDao = companyDao;
+    this.vacancyDao = vacancyDao;
+    this.mediaDao = mediaDao;
+    this.networkDao = networkDao;
+    this.userActivityDao = userActivityDao;
+
+    this.groupDao = groupDao;
+    this.pageDao = pageDao;
+    this.eventDao = eventDao;
+}
 
 
     // ================= INSTALL / SEED =================
@@ -356,5 +384,82 @@ public void deleteNotification(String notificationId) {
     ) throws Exception {
         profileDao.addSkill(userId, name, level, isMain);
     }
+
+    
+    // ================= NETWORK =================
+
+public List<User> getSuggestedUsers(String userId) {
+    return networkDao.getSuggestedUsers(userId);
+}
+
+public boolean sendConnectionRequest(String fromUserId, String toUserId) {
+    return networkDao.sendRequest(fromUserId, toUserId);
+}
+
+public boolean acceptConnection(String requesterId, String receiverId) {
+    return networkDao.acceptRequest(requesterId, receiverId);
+}
+
+public boolean removeConnection(String userA, String userB) {
+    return networkDao.removeConnection(userA, userB);
+}
+
+public String getConnectionStatus(String userA, String userB) {
+    return networkDao.getConnectionStatus(userA, userB);
+}
+public List<User> getContacts(String userId) {
+    return networkDao.getContacts(userId);
+}
+
+public List<User> getFollowing(String userId) {
+    return networkDao.getFollowing(userId);
+}
+
+
+// ================= USER ACTIVITY / EVENTS =================
+
+public List<UserActivity> getMyActivity(
+        String userId,
+        int limit,
+        int offset
+) {
+    return userActivityDao.getMyActivity(userId, limit, offset);
+}
+
+public List<UserActivity> getNetworkActivity(
+        String userId,
+        int limit,
+        int offset
+) {
+    return userActivityDao.getNetworkActivity(userId, limit, offset);
+}
+
+
+public List<GroupBlockModel> getMyGroups(String userId) {
+    return groupDao.getMyGroups(userId);
+}
+
+public GroupModel getGroupById(String id) {
+    return groupDao.getGroupById(id);
+}
+public List<GroupMember> getGroupMembers(String groupId){
+    return groupDao.getGroupMembers(groupId);
+}
+
+public List<Post> getGroupPosts(String groupId) {
+    return groupDao.getGroupPosts(groupId);
+}
+
+
+public List<PageBlockModel> getMyPages(String userId) {
+    return pageDao.getMyPages(userId);
+}
+
+
+public List<EventBlockModel> getMyEvents(String userId) {
+    return eventDao.getMyEvents(userId);
+}
+
+
 
 }

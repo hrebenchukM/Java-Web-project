@@ -25,7 +25,16 @@ public class ServletsConfig extends ServletModule {
         serve("/vacancy/*" ).with(VacancyServlet.class   );
         serve("/notifications"   ).with(NotificationsServlet.class);
         serve("/notifications/*" ).with(NotificationsServlet.class);
-
+        serve("/network"   ).with(NetworkServlet.class);
+        serve("/network/*" ).with(NetworkServlet.class);
+        serve("/contacts").with(ContactsServlet.class);
+        serve("/contacts/*").with(ContactsServlet.class);
+        serve("/groups").with(GroupsServlet.class);
+        serve("/groups/*").with(GroupsServlet.class);
+        serve("/pages").with(PagesServlet.class);
+        serve("/pages/*").with(PagesServlet.class);
+        serve("/events").with(EventsServlet.class);
+        serve("/events/*").with(EventsServlet.class);
     }
     
 }

@@ -9,6 +9,7 @@ import learning.itstep.javaweb222.data.core.seed.SeedDemoUsers;
 import learning.itstep.javaweb222.data.core.seed.SeedJobs;
 import learning.itstep.javaweb222.data.core.seed.SeedNetwork;
 import learning.itstep.javaweb222.data.core.seed.SeedNotifications;
+import learning.itstep.javaweb222.data.core.seed.SeedPortfolioDesigner;
 import learning.itstep.javaweb222.data.core.seed.SeedProfileContent;
 import learning.itstep.javaweb222.data.core.seed.SeedRolesUsers;
 
@@ -24,7 +25,7 @@ public class DbSeeder {
     private final SeedActivity seedActivity;
     private final SeedDemoPosts seedDemoPosts;
     private final SeedDemoUsers seedDemoUsers;
-    
+    private final SeedPortfolioDesigner seedPortfolioDesigner;
 
     @Inject
     public DbSeeder(
@@ -36,7 +37,8 @@ public class DbSeeder {
         SeedNotifications seedNotifications,
         SeedActivity seedActivity,
         SeedDemoPosts seedDemoPosts,
-        SeedDemoUsers seedDemoUsers
+        SeedDemoUsers seedDemoUsers,
+        SeedPortfolioDesigner seedPortfolioDesigner
     ) {
         this.seedRolesUsers = seedRolesUsers;
         this.seedProfileContent = seedProfileContent;
@@ -47,6 +49,7 @@ public class DbSeeder {
         this.seedActivity = seedActivity;
         this.seedDemoPosts = seedDemoPosts;
         this.seedDemoUsers = seedDemoUsers;
+        this.seedPortfolioDesigner = seedPortfolioDesigner;
     }
 
     public boolean seed() {
@@ -59,6 +62,7 @@ public class DbSeeder {
             seedNotifications.seed() &&
             seedActivity.seed() &&
             seedDemoPosts.seed()&&
-            seedDemoUsers.seed();
+            seedDemoUsers.seed()&&
+            seedPortfolioDesigner.seed();
     }
 }

@@ -41,6 +41,7 @@ import learning.itstep.javaweb222.data.group.GroupDao;
 import learning.itstep.javaweb222.data.media.MediaDao;
 import learning.itstep.javaweb222.data.network.NetworkDao;
 import learning.itstep.javaweb222.data.page.PageDao;
+import learning.itstep.javaweb222.data.portfolio.PortfolioDao;
 import learning.itstep.javaweb222.data.vacancy.VacancyDao;
 import learning.itstep.javaweb222.models.event.EventBlockModel;
 import learning.itstep.javaweb222.models.group.GroupBlockModel;
@@ -49,6 +50,7 @@ import learning.itstep.javaweb222.models.page.PageBlockModel;
 import learning.itstep.javaweb222.models.profile.CertificateBlockModel;
 import learning.itstep.javaweb222.models.profile.EducationBlockModel;
 import learning.itstep.javaweb222.models.profile.ExperienceBlockModel;
+import learning.itstep.javaweb222.models.profile.RecommendationBlockModel;
 
 @Singleton
 public class DataAccessor {
@@ -70,6 +72,7 @@ public class DataAccessor {
     private final GroupDao groupDao;
     private final PageDao pageDao;
     private final EventDao eventDao;
+    private final PortfolioDao portfolioDao;
 
  @Inject
 public DataAccessor(
@@ -89,7 +92,8 @@ public DataAccessor(
 
         GroupDao groupDao,
         PageDao pageDao,
-        EventDao eventDao
+        EventDao eventDao,
+        PortfolioDao portfolioDao 
 ) {
 
     this.dbSeeder = dbSeeder;
@@ -109,6 +113,7 @@ public DataAccessor(
     this.groupDao = groupDao;
     this.pageDao = pageDao;
     this.eventDao = eventDao;
+     this.portfolioDao = portfolioDao;
 }
 
 
@@ -216,6 +221,7 @@ public void attachMediaToPost(UUID postId, String fileName, String type) {
     public List<UserLanguage> getUserLanguages(String userId) {
         return profileDao.getLanguagesByUser(userId);
     }
+
 
 // ================= POSTS =================
 
@@ -460,6 +466,31 @@ public List<EventBlockModel> getMyEvents(String userId) {
     return eventDao.getMyEvents(userId);
 }
 
+// ================= PORTFOLIO =================
+
+public List<ExperienceBlockModel> getPortfolioExperienceBlocks(String userId) {
+    return portfolioDao.getExperienceBlocks(userId);
+}
+
+public List<EducationBlockModel> getPortfolioEducations(String userId) {
+    return portfolioDao.getEducationBlocks(userId);
+}
+
+public List<CertificateBlockModel> getPortfolioCertificates(String userId) {
+    return portfolioDao.getCertificateBlocks(userId);
+}
+
+public List<UserSkill> getPortfolioSkills(String userId) {
+    return portfolioDao.getSkills(userId);
+}
+
+public List<UserLanguage> getPortfolioLanguages(String userId) {
+    return portfolioDao.getLanguages(userId);
+}
+
+public List<RecommendationBlockModel> getPortfolioRecommendations(String userId) {
+    return portfolioDao.getRecommendations(userId);
+}
 
 
 }

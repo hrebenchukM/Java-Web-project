@@ -35,6 +35,9 @@ public class ServletsConfig extends ServletModule {
         serve("/pages/*").with(PagesServlet.class);
         serve("/events").with(EventsServlet.class);
         serve("/events/*").with(EventsServlet.class);
+        serve("/portfolio").with(PortfolioServlet.class);
+        serve("/portfolio/*").with(PortfolioServlet.class);
+
     }
     
 }

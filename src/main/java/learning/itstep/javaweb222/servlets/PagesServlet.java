@@ -1,5 +1,5 @@
-
 package learning.itstep.javaweb222.servlets;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
@@ -10,8 +10,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Map;
+
 import learning.itstep.javaweb222.data.DataAccessor;
 import learning.itstep.javaweb222.data.jwt.JwtToken;
+import learning.itstep.javaweb222.models.page.PageBlockModel;
+import learning.itstep.javaweb222.models.page.PageFullModel;
 import learning.itstep.javaweb222.rest.RestMeta;
 import learning.itstep.javaweb222.rest.RestResponse;
 import learning.itstep.javaweb222.rest.RestStatus;
@@ -21,6 +24,7 @@ public class PagesServlet extends HttpServlet {
 
     private final DataAccessor dataAccessor;
     private final Gson gson = new GsonBuilder().serializeNulls().create();
+
     private RestResponse restResponse;
     private JwtToken jwtToken;
 
@@ -39,7 +43,8 @@ public class PagesServlet extends HttpServlet {
                 .setServiceName("LinkedIn API 'Pages'")
                 .setManipulations(new String[]{"GET"})
                 .setLinks(Map.ofEntries(
-                    Map.entry("my", "GET /pages/my")
+                    Map.entry("my", "GET /pages/my"),
+                    Map.entry("one", "GET /pages/{id}")
                 ))
         );
 
@@ -58,11 +63,32 @@ public class PagesServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) {
 
-        if ("/my".equals(req.getPathInfo())) {
+        String path = req.getPathInfo();
+
+        // ================== GET /pages/my ==================
+        if ("/my".equals(path)) {
             restResponse.setData(
                 dataAccessor.getMyPages(jwtToken.getPayload().getSub())
             );
             restResponse.getMeta().setDataType("array");
+            return;
+        }
+
+        // ================== GET /pages/{id} ==================
+       if (path != null && path.length() > 1) {
+
+            String pageId = path.substring(1);
+
+            PageFullModel page = dataAccessor.getPageFull(pageId);
+
+            if (page == null) {
+                restResponse.setStatus(RestStatus.status404);
+                restResponse.setData("Page not found");
+                return;
+            }
+
+            restResponse.setData(page);
+            restResponse.getMeta().setDataType("object");
             return;
         }
 

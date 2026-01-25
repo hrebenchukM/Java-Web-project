@@ -50,6 +50,7 @@ import learning.itstep.javaweb222.models.event.EventFullModel;
 import learning.itstep.javaweb222.models.group.GroupBlockModel;
 import learning.itstep.javaweb222.models.group.GroupModel;
 import learning.itstep.javaweb222.models.page.PageBlockModel;
+import learning.itstep.javaweb222.models.page.PageFullModel;
 import learning.itstep.javaweb222.models.profile.CertificateBlockModel;
 import learning.itstep.javaweb222.models.profile.EducationBlockModel;
 import learning.itstep.javaweb222.models.profile.ExperienceBlockModel;
@@ -464,6 +465,12 @@ public List<PageBlockModel> getMyPages(String userId) {
     return pageDao.getMyPages(userId);
 }
 
+public PageBlockModel getPageById(String pageId) {
+    return pageDao.getPageById(pageId);
+}
+public PageFullModel getPageFull(String pageId){
+    return pageDao.getPageFull(pageId);
+}
 // ================= EVENTS =================
 
 public List<EventBlockModel> getMyEvents(String userId) {
@@ -486,7 +493,11 @@ public EventFullModel getEventFull(String eventId) {
             event.getOrganizerId().toString()
         );
     }
-    
+     else if ("page".equals(event.getOrganizerType())) {
+        organizer = pageDao.getPageById(
+            event.getOrganizerId().toString()
+        );
+    }
 
     List<EventAttendee> attendees =
         eventDao.getEventAttendees(eventId);

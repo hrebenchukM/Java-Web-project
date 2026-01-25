@@ -208,17 +208,90 @@ public class SeedNetwork {
      if (!exec(sql, "bind post to group")) return false;
 
 
-             // =====================================================
-        // Pages
-        // =====================================================
+ // =====================================================
+// Pages
+// =====================================================
 
-        sql =
-            "INSERT INTO pages (page_id, owner_id, name, description, logo_url) " +
-            "SELECT 'dddd4444-0000-0000-0000-000000000001', '" + adminId + "', " +
-            "'Google Design', 'Official Google Design page', 'google-design.jpg' " +
-            "WHERE NOT EXISTS (SELECT 1 FROM pages WHERE name='Google Design')";
-        if (!exec(sql, "page Google Design")) return false;
+// =====================
+// Company: Google Design
+// =====================
 
+final String GOOGLE_PAGE_ID = "dddd4444-0000-0000-0000-000000000001";
+
+// ---------- Page ----------
+sql =
+    "INSERT INTO pages (page_id, owner_id, name, description, logo_url) " +
+    "SELECT '" + GOOGLE_PAGE_ID + "', '" + adminId + "', " +
+    "'Google Design', " +
+    "'Google Design is a cooperative effort led by designers and developers at Google.', " +
+    "'google-design.jpg' " +
+    "WHERE NOT EXISTS (" +
+    "  SELECT 1 FROM pages WHERE page_id='" + GOOGLE_PAGE_ID + "'" +
+    ")";
+if (!exec(sql, "seed Google Design page")) return false;
+
+// ---------- Team users (FIXED UUIDs) ----------
+String[][] team = {
+    {"aaaa0001-0000-0000-0000-000000000001", "Sarah",   "Mitchell", "Design Director",   "sarah.jpg"},
+    {"aaaa0002-0000-0000-0000-000000000002", "James",   "Wilson",   "Senior Designer",   "james.jpg"},
+    {"aaaa0003-0000-0000-0000-000000000003", "Emma",    "Thompson", "Product Designer",  "emma.jpg"},
+    {"aaaa0004-0000-0000-0000-000000000004", "Michael", "Chen",     "UX Researcher",     "michael.jpg"}
+};
+
+for (String[] u : team) {
+    sql =
+        "INSERT INTO users (user_id, email, first_name, second_name, avatar_url, profile_title, auth_provider) " +
+        "SELECT '" + u[0] + "', '" + u[1].toLowerCase() + "@google.com', '" +
+        u[1] + "', '" + u[2] + "', '" + u[4] + "', '" + u[3] + "', 'local' " +
+        "WHERE NOT EXISTS (" +
+        "  SELECT 1 FROM users WHERE user_id='" + u[0] + "'" +
+        ")";
+    if (!exec(sql, "seed Google team user " + u[1])) return false;
+}
+
+// ---------- Page admins ----------
+sql =
+    "INSERT INTO page_admins (page_admin_id, page_id, user_id, role) " +
+    "SELECT UUID(), '" + GOOGLE_PAGE_ID + "', u.user_id, 'admin' " +
+    "FROM users u " +
+    "WHERE u.email LIKE '%@google.com' " +
+    "AND NOT EXISTS (" +
+    "  SELECT 1 FROM page_admins pa " +
+    "  WHERE pa.page_id='" + GOOGLE_PAGE_ID + "' " +
+    "    AND pa.user_id=u.user_id" +
+    ")";
+if (!exec(sql, "bind Google team to page admins")) return false;
+
+// ---------- Page followers ----------
+sql =
+    "INSERT INTO page_followers (page_follower_id, page_id, user_id) " +
+    "SELECT UUID(), '" + GOOGLE_PAGE_ID + "', u.user_id " +
+    "FROM users u " +
+    "WHERE NOT EXISTS (" +
+    "  SELECT 1 FROM page_followers pf " +
+    "  WHERE pf.page_id='" + GOOGLE_PAGE_ID + "' " +
+    "    AND pf.user_id=u.user_id" +
+    ")";
+if (!exec(sql, "seed Google Design page followers")) return false;
+
+// ---------- Page posts ----------
+sql =
+    "INSERT INTO posts (post_id, user_id, content) " +
+    "SELECT UUID(), '" + adminId + "', " +
+    "'Introducing Material Design 3: The next evolution of Material Design.' " +
+    "WHERE NOT EXISTS (" +
+    "  SELECT 1 FROM posts WHERE content LIKE 'Introducing Material%'" +
+    ")";
+if (!exec(sql, "Google Design post 1")) return false;
+
+sql =
+    "INSERT INTO posts (post_id, user_id, content) " +
+    "SELECT UUID(), '" + adminId + "', " +
+    "'How we design for billions: A look at Google Design principles.' " +
+    "WHERE NOT EXISTS (" +
+    "  SELECT 1 FROM posts WHERE content LIKE 'How we design%'" +
+    ")";
+if (!exec(sql, "Google Design post 2")) return false;
 
         // =====================================================
         // Events

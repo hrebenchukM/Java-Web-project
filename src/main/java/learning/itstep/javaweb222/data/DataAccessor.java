@@ -28,6 +28,8 @@ import learning.itstep.javaweb222.data.dto.MessageMedia;
 import learning.itstep.javaweb222.data.dto.MessageRead;
 import learning.itstep.javaweb222.data.dto.Notification;
 import learning.itstep.javaweb222.data.dto.Education;
+import learning.itstep.javaweb222.data.dto.Event;
+import learning.itstep.javaweb222.data.dto.EventAttendee;
 import learning.itstep.javaweb222.data.dto.Experience;
 import learning.itstep.javaweb222.data.dto.GroupMember;
 import learning.itstep.javaweb222.data.dto.Media;
@@ -44,6 +46,7 @@ import learning.itstep.javaweb222.data.page.PageDao;
 import learning.itstep.javaweb222.data.portfolio.PortfolioDao;
 import learning.itstep.javaweb222.data.vacancy.VacancyDao;
 import learning.itstep.javaweb222.models.event.EventBlockModel;
+import learning.itstep.javaweb222.models.event.EventFullModel;
 import learning.itstep.javaweb222.models.group.GroupBlockModel;
 import learning.itstep.javaweb222.models.group.GroupModel;
 import learning.itstep.javaweb222.models.page.PageBlockModel;
@@ -461,10 +464,42 @@ public List<PageBlockModel> getMyPages(String userId) {
     return pageDao.getMyPages(userId);
 }
 
+// ================= EVENTS =================
 
 public List<EventBlockModel> getMyEvents(String userId) {
     return eventDao.getMyEvents(userId);
 }
+
+public Event getEventById(String eventId) {
+    return eventDao.getEventById(eventId);
+}
+
+public EventFullModel getEventFull(String eventId) {
+
+    Event event = eventDao.getEventById(eventId);
+    if (event == null) return null;
+
+    Object organizer = null;
+
+    if ("user".equals(event.getOrganizerType())) {
+        organizer = userDao.getUserById(
+            event.getOrganizerId().toString()
+        );
+    }
+    
+
+    List<EventAttendee> attendees =
+        eventDao.getEventAttendees(eventId);
+
+    return new EventFullModel()
+        .setEvent(event)
+        .setOrganizer(organizer)
+        .setAttendees(attendees)
+        .setAttendeesCount(attendees.size())
+        .setSchedule(eventDao.getEventSchedule(eventId))
+        .setSpeakers(eventDao.getEventSpeakers(eventId));
+}
+
 
 // ================= PORTFOLIO =================
 

@@ -950,7 +950,54 @@ public class DbInstaller {
 
 
         
-        
+    // ------------------ Events: Schedule ------------------
+if (!exec(
+    "CREATE TABLE IF NOT EXISTS event_schedule (" +
+    "schedule_id CHAR(36) PRIMARY KEY," +
+    "event_id CHAR(36) NOT NULL," +
+    "time_label VARCHAR(32) NOT NULL," +
+    "title VARCHAR(256) NOT NULL," +
+    "speaker_name VARCHAR(128) NULL," +
+    "order_index INT NOT NULL," +
+    "created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP," +
+
+    "INDEX idx_event (event_id)," +
+    "INDEX idx_event_order (event_id, order_index)" +
+    ") ENGINE=INNODB " +
+    "DEFAULT CHARSET=utf8mb4 " +
+    "COLLATE=utf8mb4_unicode_ci",
+    "event_schedule"
+)) return false;
+// ------------------ Events: Speakers ------------------
+if (!exec(
+    "CREATE TABLE IF NOT EXISTS event_speakers (" +
+    "speaker_id CHAR(36) PRIMARY KEY," +
+    "name VARCHAR(128) NOT NULL," +
+    "title VARCHAR(256) NULL," +
+    "avatar_url VARCHAR(256) NULL," +
+    "created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP" +
+    ") ENGINE=INNODB " +
+    "DEFAULT CHARSET=utf8mb4 " +
+    "COLLATE=utf8mb4_unicode_ci",
+    "event_speakers"
+)) return false;
+
+// ------------------ Events: Speaker Map ------------------
+if (!exec(
+    "CREATE TABLE IF NOT EXISTS event_speaker_map (" +
+    "event_speaker_map_id CHAR(36) PRIMARY KEY," +
+    "event_id CHAR(36) NOT NULL," +
+    "speaker_id CHAR(36) NOT NULL," +
+    "order_index INT NULL," +
+
+    "UNIQUE(event_id, speaker_id)," +
+    "INDEX idx_event (event_id)" +
+    ") ENGINE=INNODB " +
+    "DEFAULT CHARSET=utf8mb4 " +
+    "COLLATE=utf8mb4_unicode_ci",
+    "event_speaker_map"
+)) return false;
+
         
         
         return true;

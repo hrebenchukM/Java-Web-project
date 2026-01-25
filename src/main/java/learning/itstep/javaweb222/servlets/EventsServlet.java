@@ -1,5 +1,5 @@
-
 package learning.itstep.javaweb222.servlets;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
@@ -10,8 +10,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Map;
+
 import learning.itstep.javaweb222.data.DataAccessor;
 import learning.itstep.javaweb222.data.jwt.JwtToken;
+import learning.itstep.javaweb222.models.event.EventFullModel;
 import learning.itstep.javaweb222.rest.RestMeta;
 import learning.itstep.javaweb222.rest.RestResponse;
 import learning.itstep.javaweb222.rest.RestStatus;
@@ -21,6 +23,7 @@ public class EventsServlet extends HttpServlet {
 
     private final DataAccessor dataAccessor;
     private final Gson gson = new GsonBuilder().serializeNulls().create();
+
     private RestResponse restResponse;
     private JwtToken jwtToken;
 
@@ -39,7 +42,8 @@ public class EventsServlet extends HttpServlet {
                 .setServiceName("LinkedIn API 'Events'")
                 .setManipulations(new String[]{"GET"})
                 .setLinks(Map.ofEntries(
-                    Map.entry("my", "GET /events/my")
+                    Map.entry("my", "GET /events/my"),
+                    Map.entry("one", "GET /events/{id}")
                 ))
         );
 
@@ -58,11 +62,32 @@ public class EventsServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) {
 
-        if ("/my".equals(req.getPathInfo())) {
+        String path = req.getPathInfo();
+
+        // ================== GET /events/my ==================
+        if ("/my".equals(path)) {
             restResponse.setData(
                 dataAccessor.getMyEvents(jwtToken.getPayload().getSub())
             );
             restResponse.getMeta().setDataType("array");
+            return;
+        }
+
+        // ================== GET /events/{id} ==================
+        if (path != null && path.length() > 1) {
+
+            String eventId = path.substring(1);
+
+            EventFullModel model = dataAccessor.getEventFull(eventId);
+
+            if (model == null) {
+                restResponse.setStatus(RestStatus.status404);
+                restResponse.setData("Event not found");
+                return;
+            }
+
+            restResponse.setData(model);
+            restResponse.getMeta().setDataType("object");
             return;
         }
 

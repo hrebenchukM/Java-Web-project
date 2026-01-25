@@ -224,18 +224,82 @@ public class SeedNetwork {
         // Events
         // =====================================================
 
-        sql =
-            "INSERT INTO events (" +
-            "event_id, organizer_type, organizer_id, title, location, is_online, start_at, end_at, cover_image_url" +
-            ") SELECT " +
-            "'eeee5555-0000-0000-0000-000000000001', " +
-            "'user', '" + adminId + "', " +
-            "'Design Systems Conference 2026', " +
-            "'San Francisco, CA', 0, " +
-            "'2026-02-15 09:00:00', '2026-02-15 17:00:00', " +
-            "'design-systems-2026.jpg' " +
-            "WHERE NOT EXISTS (SELECT 1 FROM events WHERE title='Design Systems Conference 2026')";
-        if (!exec(sql, "event Design Systems")) return false;
+// =====================================================
+// Events
+// =====================================================
+
+sql =
+    "INSERT INTO events (" +
+    "event_id, organizer_type, organizer_id, title, description, " +
+    "cover_image_url, location, is_online, visibility, allow_comments, " +
+    "start_at, end_at" +
+    ") SELECT " +
+    "'eeee5555-0000-0000-0000-000000000001', " +
+    "'user', '" + adminId + "', " +
+    "'Design Systems Conference 2026', " +
+    "'Join us for a full day of inspiring talks, workshops, and networking opportunities with leading designers from around the world.', " +
+    "'design-systems-2026.jpg', " +
+    "'Moscone Center, San Francisco, CA', " +
+    "0, " +                         // is_online
+    "'public', " +
+    "1, " +                         // allow_comments
+    "'2026-02-15 09:00:00', " +
+    "'2026-02-15 17:00:00' " +
+    "WHERE NOT EXISTS (" +
+    "  SELECT 1 FROM events WHERE title='Design Systems Conference 2026'" +
+    ")";
+if (!exec(sql, "event Design Systems Conference")) return false;
+
+String eventId = "eeee5555-0000-0000-0000-000000000001";
+
+String[][] schedule = {
+  {"9:00 AM", "Registration & Welcome Coffee", "", "1"},
+  {"10:00 AM", "The Future of Design Systems", "Sarah Mitchell", "2"},
+  {"11:00 AM", "Building Accessible Components", "James Wilson", "3"},
+  {"12:00 PM", "Lunch Break", "", "4"},
+  {"1:00 PM", "Design Tokens at Scale", "Emma Thompson", "5"},
+  {"2:00 PM", "Workshop: Component Architecture", "Michael Chen", "6"},
+  {"4:00 PM", "Panel Discussion & Q&A", "All Speakers", "7"}
+};
+
+for (String[] row : schedule) {
+    sql =
+        "INSERT INTO event_schedule (schedule_id, event_id, time_label, title, speaker_name, order_index) " +
+        "SELECT UUID(), '" + eventId + "', '" + row[0] + "', '" + row[1] + "', " +
+        (row[2].isEmpty() ? "NULL" : "'" + row[2] + "'") + ", " + row[3] +
+        " WHERE NOT EXISTS (" +
+        "   SELECT 1 FROM event_schedule " +
+        "   WHERE event_id='" + eventId + "' AND order_index=" + row[3] +
+        ")";
+    if (!exec(sql, "event schedule " + row[1])) return false;
+}
+String[][] speakers = {
+  {"Sarah Mitchell", "Design Director at Google", "sarah.jpg"},
+  {"James Wilson", "Principal Designer at Meta", "james.jpg"},
+  {"Emma Thompson", "Design Lead at Apple", "emma.jpg"},
+  {"Michael Chen", "Senior Designer at Microsoft", "michael.jpg"}
+};
+
+for (String[] s : speakers) {
+    sql =
+        "INSERT INTO event_speakers (speaker_id, name, title, avatar_url) " +
+        "SELECT UUID(), '" + s[0] + "', '" + s[1] + "', '" + s[2] + "' " +
+        "WHERE NOT EXISTS (SELECT 1 FROM event_speakers WHERE name='" + s[0] + "')";
+    if (!exec(sql, "event speaker " + s[0])) return false;
+}
+
+sql =
+    "INSERT INTO event_speaker_map (event_speaker_map_id, event_id, speaker_id) " +
+    "SELECT UUID(), '" + eventId + "', speaker_id " +
+    "FROM event_speakers " +
+    "WHERE name IN (" +
+    "'Sarah Mitchell','James Wilson','Emma Thompson','Michael Chen'" +
+    ") " +
+    "AND NOT EXISTS (" +
+    "  SELECT 1 FROM event_speaker_map esm " +
+    "  WHERE esm.event_id='" + eventId + "' AND esm.speaker_id=event_speakers.speaker_id" +
+    ")";
+if (!exec(sql, "bind event speakers")) return false;
 
 
         return true;

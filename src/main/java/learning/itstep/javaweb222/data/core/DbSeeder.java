@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import learning.itstep.javaweb222.data.core.seed.SeedActivity;
 import learning.itstep.javaweb222.data.core.seed.SeedCareerEducation;
+import learning.itstep.javaweb222.data.core.seed.SeedDemoChats;
 import learning.itstep.javaweb222.data.core.seed.SeedDemoPosts;
 import learning.itstep.javaweb222.data.core.seed.SeedDemoUsers;
 import learning.itstep.javaweb222.data.core.seed.SeedJobs;
@@ -26,6 +27,7 @@ public class DbSeeder {
     private final SeedDemoPosts seedDemoPosts;
     private final SeedDemoUsers seedDemoUsers;
     private final SeedPortfolioDesigner seedPortfolioDesigner;
+    private final SeedDemoChats seedDemoChats;
 
     @Inject
     public DbSeeder(
@@ -38,7 +40,9 @@ public class DbSeeder {
         SeedActivity seedActivity,
         SeedDemoPosts seedDemoPosts,
         SeedDemoUsers seedDemoUsers,
-        SeedPortfolioDesigner seedPortfolioDesigner
+        SeedPortfolioDesigner seedPortfolioDesigner,
+        SeedDemoChats seedDemoChats
+
     ) {
         this.seedRolesUsers = seedRolesUsers;
         this.seedProfileContent = seedProfileContent;
@@ -50,6 +54,8 @@ public class DbSeeder {
         this.seedDemoPosts = seedDemoPosts;
         this.seedDemoUsers = seedDemoUsers;
         this.seedPortfolioDesigner = seedPortfolioDesigner;
+        this.seedDemoChats = seedDemoChats;
+
     }
 
     public boolean seed() {
@@ -63,6 +69,8 @@ public class DbSeeder {
             seedActivity.seed() &&
             seedDemoPosts.seed()&&
             seedDemoUsers.seed()&&
-            seedPortfolioDesigner.seed();
+            seedPortfolioDesigner.seed()&&
+            seedDemoChats.seed();
+        
     }
 }

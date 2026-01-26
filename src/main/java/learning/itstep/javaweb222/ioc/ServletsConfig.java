@@ -3,6 +3,7 @@ package learning.itstep.javaweb222.ioc;
 import com.google.inject.servlet.ServletModule;
 import learning.itstep.javaweb222.filters.*;
 import learning.itstep.javaweb222.servlets.*;
+import learning.itstep.javaweb222.servlets.stream.ChatStreamServlet;
 
 public class ServletsConfig extends ServletModule {
 
@@ -37,8 +38,12 @@ public class ServletsConfig extends ServletModule {
         serve("/events/*").with(EventsServlet.class);
         serve("/portfolio").with(PortfolioServlet.class);
         serve("/portfolio/*").with(PortfolioServlet.class);
-
-    }
+        serve("/chat/stream").with(ChatStreamServlet.class);
+        serve("/chats").with(ChatsServlet.class);
+        serve("/chats/*").with(ChatsServlet.class);
+        serve("/messages").with(MessageServlet.class);
+        serve("/messages/*").with(MessageServlet.class);
+}
     
 }
 /*

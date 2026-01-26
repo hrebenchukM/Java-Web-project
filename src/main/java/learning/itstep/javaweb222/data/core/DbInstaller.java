@@ -719,16 +719,18 @@ public class DbInstaller {
 
         // ------------------ Messaging: MessageReads ------------------
         if (!exec(
-            "CREATE TABLE IF NOT EXISTS message_reads ("
-            + "message_read_id CHAR(36) PRIMARY KEY,"
-            + "message_id CHAR(36) NOT NULL,"
-            + "user_id CHAR(36) NOT NULL,"
-            + "read_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP"
-            + ") ENGINE=INNODB "
-            + "DEFAULT CHARSET=utf8mb4 "
-            + "COLLATE=utf8mb4_unicode_ci",
-            "message_reads"
-        )) return false;
+           "CREATE TABLE IF NOT EXISTS message_reads ("
+           + "message_read_id CHAR(36) PRIMARY KEY,"
+           + "message_id CHAR(36) NOT NULL,"
+           + "user_id CHAR(36) NOT NULL,"
+           + "read_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,"
+           + "UNIQUE(message_id, user_id)"
+           + ") ENGINE=INNODB "
+           + "DEFAULT CHARSET=utf8mb4 "
+           + "COLLATE=utf8mb4_unicode_ci",
+           "message_reads"
+       )) return false;
+
 
         // ------------------ Messaging: MessageMedia ------------------
         if (!exec(

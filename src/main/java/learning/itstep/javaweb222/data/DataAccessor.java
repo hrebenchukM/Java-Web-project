@@ -45,6 +45,7 @@ import learning.itstep.javaweb222.data.network.NetworkDao;
 import learning.itstep.javaweb222.data.page.PageDao;
 import learning.itstep.javaweb222.data.portfolio.PortfolioDao;
 import learning.itstep.javaweb222.data.vacancy.VacancyDao;
+import learning.itstep.javaweb222.models.chat.ChatListItem;
 import learning.itstep.javaweb222.models.event.EventBlockModel;
 import learning.itstep.javaweb222.models.event.EventFullModel;
 import learning.itstep.javaweb222.models.group.GroupBlockModel;
@@ -135,6 +136,9 @@ public DataAccessor(
 
     public User getUserById(String userId) {
         return userDao.getUserById(userId);
+    }
+    public User getUserById(UUID id) {
+        return userDao.getUserById(id);
     }
 
     public AuthCredential getUserAccessByCredentials(String login, String password) {
@@ -284,6 +288,14 @@ public void attachMediaToPost(UUID postId, String fileName, String type) {
     public void deleteChat(String chatId) {
         chatDao.deleteChat(chatId);
     }
+    public void markChatAsRead(String chatId, String userId) {
+        messageDao.markChatMessagesAsRead(chatId, userId);
+        chatDao.clearUnread(chatId, userId);
+    }
+
+    public void updateLastSeen(String userId) {
+        userDao.updateLastSeen(userId);
+    }
 
     // ================= MESSAGES =================
 
@@ -291,14 +303,18 @@ public void attachMediaToPost(UUID postId, String fileName, String type) {
         return messageDao.getChatMessages(chatId);
     }
 
+    public List<Message> getChatMessages(String chatId, int offset, int limit) {
+        return messageDao.getChatMessages(chatId,offset,limit);
+    }
     public Message getMessageById(String messageId) {
         return messageDao.getMessageById(messageId);
     }
 
     
-    public void addMessage(Message message) throws Exception {
-        messageDao.addMessage(message);
+    public UUID addMessage(Message message) throws Exception {
+        return messageDao.addMessage(message);
     }
+
     public void editMessage(String messageId, String content) {
         messageDao.editMessage(messageId, content);
     }
@@ -322,6 +338,14 @@ public void attachMediaToPost(UUID postId, String fileName, String type) {
     public List<MessageRead> getMessageReads(String messageId) {
         return messageDao.getMessageReads(messageId);
     }
+
+    public boolean isChatMember(String chatId, String userId) {
+        return chatDao.isMember(chatId, userId);
+    }
+    public List<ChatListItem> getUserChatList(String userId) {
+        return chatDao.getUserChatList(userId);
+    }
+
 
    // ================= NOTIFICATIONS =================
 

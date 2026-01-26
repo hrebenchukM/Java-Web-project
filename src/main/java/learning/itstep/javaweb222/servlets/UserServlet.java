@@ -104,6 +104,12 @@ public class UserServlet extends HttpServlet {
             authenticate(req);
             return;
         }
+          // 👇 НОВОЕ
+        if (path.matches("^/[0-9a-fA-F\\-]{36}$")) {
+            getUserById(path.substring(1));
+            return;
+        }
+
 
         switch (path) {
             case "/profile": profile(); break;
@@ -126,6 +132,7 @@ public class UserServlet extends HttpServlet {
         String path = req.getPathInfo();
         restResponse.getMeta().setDataType("string");
 
+      
         switch (path) {
             case "/experience": experiencePost(req); break;
             case "/education": educationPost(req); break;
@@ -134,6 +141,27 @@ public class UserServlet extends HttpServlet {
             default:
                 restResponse.setStatus(RestStatus.status405);
                 restResponse.setData("POST not allowed for " + path);
+        }
+    }
+
+    private void getUserById(String userId) {
+        try {
+            UUID uid = UUID.fromString(userId);
+
+            User user = dataAccessor.getUserById(uid);
+
+            if (user == null) {
+                restResponse.setStatus(RestStatus.status404);
+                restResponse.setData("User not found");
+                return;
+            }
+
+            restResponse.setData(user);
+            restResponse.getMeta().setDataType("object");
+        }
+        catch (Exception ex) {
+            restResponse.setStatus(RestStatus.status400);
+            restResponse.setData("Invalid user id");
         }
     }
 

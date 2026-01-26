@@ -52,6 +52,34 @@ public class MessageDao {
         return messages;
     }
 
+    public List<Message> getChatMessages(String chatId, int offset, int limit) {
+        String sql = "SELECT * FROM messages m "
+                + "LEFT JOIN users u ON m.sender_id = u.user_id "
+                + "LEFT JOIN chats c ON m.chat_id = c.chat_id "
+                + "WHERE m.chat_id = ? AND m.deleted_at IS NULL "
+                + "ORDER BY m.sent_at DESC "
+                + "LIMIT ?, ?";
+
+        List<Message> messages = new ArrayList<>();
+
+        try (PreparedStatement prep = db.getConnection().prepareStatement(sql)) {
+            prep.setString(1, chatId);
+            prep.setInt(2, offset);
+            prep.setInt(3, limit);
+
+            ResultSet rs = prep.executeQuery();
+            while (rs.next()) {
+                messages.add(Message.fromResultSet(rs));
+            }
+        }
+        catch (SQLException ex) {
+            logger.log(Level.WARNING, "MessageDao::getChatMessages(paged) {0}",
+                    ex.getMessage() + " | " + sql);
+        }
+
+        return messages;
+    }
+
     public Message getMessageById(String messageId) {
         String sql = "SELECT * FROM messages m "
                 + "LEFT JOIN users u ON m.sender_id = u.user_id "
@@ -74,19 +102,22 @@ public class MessageDao {
 
     // ================== CREATE ==================
 
-    public void addMessage(Message message) throws Exception {
+    public UUID addMessage(Message message) throws Exception {
         UUID.fromString(message.getChatId().toString());
         UUID.fromString(message.getSenderId().toString());
 
+        UUID messageId = db.getDbIdentity();
+
         String sql = "INSERT INTO messages "
                 + "(message_id, chat_id, sender_id, content, is_draft) "
-                + "VALUES(UUID(), ?, ?, ?, ?)";
+                + "VALUES(?, ?, ?, ?, ?)";
 
         try (PreparedStatement prep = db.getConnection().prepareStatement(sql)) {
-            prep.setString(1, message.getChatId().toString());
-            prep.setString(2, message.getSenderId().toString());
-            prep.setString(3, message.getContent());
-            prep.setInt(4, message.getIsDraft());
+            prep.setString(1, messageId.toString());
+            prep.setString(2, message.getChatId().toString());
+            prep.setString(3, message.getSenderId().toString());
+            prep.setString(4, message.getContent());
+            prep.setInt(5, message.getIsDraft());
             prep.executeUpdate();
         }
         catch (SQLException ex) {
@@ -94,6 +125,8 @@ public class MessageDao {
                     ex.getMessage() + " | " + sql);
             throw ex;
         }
+
+        return messageId;
     }
 
     // ================== UPDATE ==================
@@ -204,4 +237,30 @@ public class MessageDao {
         }
         return reads;
     }
+    public void markChatMessagesAsRead(String chatId, String userId) {
+
+        String sql = """
+            INSERT INTO message_reads (message_read_id, message_id, user_id)
+            SELECT UUID(), m.message_id, ?
+            FROM messages m
+            WHERE m.chat_id = ?
+            AND m.deleted_at IS NULL
+            AND NOT EXISTS (
+                SELECT 1 FROM message_reads mr
+                WHERE mr.message_id = m.message_id
+                AND mr.user_id = ?
+            )
+        """;
+
+        try (PreparedStatement ps = db.getConnection().prepareStatement(sql)) {
+            ps.setString(1, userId);
+            ps.setString(2, chatId);
+            ps.setString(3, userId);
+            ps.executeUpdate();
+        }
+        catch (SQLException ex) {
+            logger.log(Level.WARNING, "MessageDao::markChatMessagesAsRead {0}", ex.getMessage());
+        }
+    }
+
 }

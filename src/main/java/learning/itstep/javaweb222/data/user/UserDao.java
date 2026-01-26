@@ -49,6 +49,27 @@ public class UserDao {
         }
         return null;
     }
+    public User getUserById(UUID id) {
+        String sql = """
+            SELECT *
+            FROM users
+            WHERE user_id = ?
+              AND deleted_at IS NULL
+        """;
+
+        try (PreparedStatement ps = db.getConnection().prepareStatement(sql)) {
+            ps.setString(1, id.toString());
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return User.fromResultSet(rs);
+            }
+        }
+        catch (SQLException ex) {
+            logger.warning(ex.getMessage());
+        }
+        return null;
+    }
+
 
     
     
@@ -162,5 +183,16 @@ public class UserDao {
             return null;
         }
     }
-    
+     public void updateLastSeen(String userId) {
+        String sql =
+            "UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE user_id = ?";
+
+        try (PreparedStatement ps = db.getConnection().prepareStatement(sql)) {
+            ps.setString(1, userId);
+            ps.executeUpdate();
+        }
+        catch (SQLException ex) {
+            logger.log(Level.WARNING, "UserDao::updateLastSeen {0}", ex.getMessage());
+        }
+    }
 }
